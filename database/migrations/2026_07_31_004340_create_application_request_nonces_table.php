@@ -19,7 +19,10 @@ return new class extends Migration
             $table->string('body_hash', 64);
             $table->timestamp('expires_at')->index();
             $table->timestamps();
-            $table->unique(['connected_application_id', 'request_id']);
+            $table->unique(
+                ['connected_application_id', 'request_id'],
+                'app_nonces_application_request_unique',
+            );
         });
     }
 

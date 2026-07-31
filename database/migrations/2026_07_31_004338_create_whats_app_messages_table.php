@@ -37,7 +37,10 @@ return new class extends Migration
             $table->timestamp('read_at')->nullable();
             $table->timestamp('failed_at')->nullable();
             $table->timestamps();
-            $table->unique(['connected_application_id', 'idempotency_key']);
+            $table->unique(
+                ['connected_application_id', 'idempotency_key'],
+                'wa_messages_app_idempotency_unique',
+            );
         });
     }
 
