@@ -1,0 +1,152 @@
+openapi: 3.1.0
+info:
+  title: Build With Abdallah Messaging API
+  version: 1.0.0
+servers:
+  - url: https://api.buildwithabdallah.com
+paths:
+  /webhooks/meta/whatsapp:
+    get:
+      summary: Verify the Meta webhook
+      parameters:
+        - {name: hub.mode, in: query, required: true, schema: {type: string}}
+        - {name: hub.verify_token, in: query, required: true, schema: {type: string}}
+        - {name: hub.challenge, in: query, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Exact plain-text challenge}
+        "403": {description: Invalid verification}
+    post:
+      summary: Receive a signed Meta webhook
+      parameters:
+        - {$ref: "#/components/parameters/MetaSignature"}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Durably received}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "403": {description: Missing or invalid signature}
+  /api/v1/whatsapp/messages:
+    post:
+      summary: Queue a WhatsApp text or template
+      security: [{BwaHmac: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - {$ref: "#/components/schemas/TextMessageRequest"}
+                - {$ref: "#/components/schemas/TemplateMessageRequest"}
+      responses:
+        "202":
+          description: Queued or existing identical idempotent result
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/MessageResponse"}
+        "401": {$ref: "#/components/responses/Unauthenticated"}
+        "403": {description: Disabled or unauthorized application}
+        "409": {description: Replay or idempotency conflict}
+        "422": {description: Validation or customer-service-window failure}
+  /api/v1/whatsapp/messages/{message}:
+    get:
+      summary: Get a message
+      security: [{BwaHmac: []}]
+      parameters:
+        - {name: message, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Message status}
+        "404": {description: Not found}
+  /api/v1/whatsapp/conversations/{conversation}:
+    get:
+      summary: Get a conversation
+      security: [{BwaHmac: []}]
+      parameters:
+        - {name: conversation, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Conversation}
+        "404": {description: Not found}
+  /api/v1/whatsapp/conversations/{conversation}/route:
+    post:
+      summary: Route a conversation
+      security: [{BwaHmac: []}]
+      parameters:
+        - {name: conversation, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [product]
+              properties:
+                product: {type: string, enum: [kirada, djib-payroll, smkit, custom-software, general-support]}
+      responses:
+        "200": {description: Routed conversation}
+        "403": {description: Product not authorized}
+  /up:
+    get:
+      summary: Laravel liveness check
+      responses:
+        "200": {description: Live}
+  /health/ready:
+    get:
+      summary: Internal dependency readiness
+      responses:
+        "200": {description: Ready}
+        "503": {description: Not ready}
+components:
+  securitySchemes:
+    BwaHmac:
+      type: apiKey
+      in: header
+      name: X-BWA-Signature
+      description: Also requires X-BWA-App, X-BWA-Timestamp, and X-BWA-Request-ID.
+  parameters:
+    MetaSignature:
+      name: X-Hub-Signature-256
+      in: header
+      required: true
+      schema: {type: string, pattern: "^sha256=[a-f0-9]{64}$"}
+  responses:
+    BadRequest: {description: Invalid JSON}
+    Unauthenticated: {description: Invalid application authentication}
+  schemas:
+    TextMessageRequest:
+      type: object
+      required: [recipient, type, body, product, idempotency_key]
+      properties:
+        recipient: {type: string, example: "+12070000000"}
+        type: {const: text}
+        body: {type: string}
+        product: {type: string}
+        correlation_id: {type: [string, "null"]}
+        idempotency_key: {type: string}
+    TemplateMessageRequest:
+      type: object
+      required: [recipient, type, product, template, idempotency_key]
+      properties:
+        recipient: {type: string, example: "+12070000000"}
+        type: {const: template}
+        product: {type: string}
+        template:
+          type: object
+          required: [name, language]
+          properties:
+            name: {type: string}
+            language: {type: string}
+            components: {type: array, items: {type: object}}
+        correlation_id: {type: [string, "null"]}
+        idempotency_key: {type: string}
+    MessageResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            id: {type: string}
+            status: {type: string}
+            correlation_id: {type: [string, "null"]}
+            idempotency_key: {type: string}
