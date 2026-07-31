@@ -1,6 +1,9 @@
 <?php
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Messaging\HmacSigner;
+use App\Models\ConnectedApplication;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 /*
@@ -15,7 +18,7 @@ use Tests\TestCase;
 */
 
 pest()->extend(TestCase::class)
- // ->use(RefreshDatabase::class)
+    ->use(LazilyRefreshDatabase::class)
     ->in('Feature');
 
 /*
@@ -44,7 +47,17 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+function signedApplicationHeaders(ConnectedApplication $application, string $method, string $path, string $body, ?string $requestId = null, ?int $timestamp = null): array
 {
-    // ..
+    $requestId ??= (string) Str::uuid();
+    $timestamp ??= now()->timestamp;
+    $signature = app(HmacSigner::class)->sign($method, $path, (string) $timestamp, $requestId, $body, $application->request_signing_secret);
+
+    return [
+        'HTTP_X_BWA_APP' => $application->slug,
+        'HTTP_X_BWA_TIMESTAMP' => (string) $timestamp,
+        'HTTP_X_BWA_REQUEST_ID' => $requestId,
+        'HTTP_X_BWA_SIGNATURE' => $signature,
+        'CONTENT_TYPE' => 'application/json',
+    ];
 }
