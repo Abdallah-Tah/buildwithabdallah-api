@@ -5,6 +5,7 @@ namespace App\Messaging;
 use App\Models\ApplicationEventDelivery;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 class ApplicationEventDispatcher
 {
@@ -14,10 +15,13 @@ class ApplicationEventDispatcher
     {
         $application = $delivery->connectedApplication;
         $payload = $delivery->payload;
+        $payload['id'] ??= $delivery->event_id;
         $payload['event_id'] = $delivery->event_id;
+        $payload['type'] ??= $delivery->event_type;
+        $payload['event_type'] ??= $delivery->event_type;
         $body = json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
         $timestamp = (string) now()->timestamp;
-        $requestId = $delivery->event_id;
+        $requestId = (string) Str::uuid();
         $path = (string) parse_url((string) $application->webhook_url, PHP_URL_PATH);
         $signature = $this->signer->sign('POST', $path, $timestamp, $requestId, $body, $application->event_signing_secret);
 

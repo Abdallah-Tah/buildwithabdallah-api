@@ -1,10 +1,13 @@
 <?php
 
 use App\Jobs\SendWhatsAppMessage;
+use App\Messaging\MetaWhatsAppClient;
 use App\Models\ConnectedApplication;
 use App\Models\WhatsAppContact;
 use App\Models\WhatsAppConversation;
 use App\Models\WhatsAppMessage;
+use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 
 function sendSignedJson($test, ConnectedApplication $application, array $payload)
@@ -121,4 +124,50 @@ test('live sending is safely blocked by default', function () {
 
     expect(WhatsAppMessage::first()->status->value)->toBe('failed')
         ->and(WhatsAppMessage::first()->failure_code)->toBe('LIVE_SEND_DISABLED');
+});
+
+test('meta rejection details are retained for operational diagnosis', function () {
+    Queue::fake();
+    config()->set('services.meta_whatsapp.live_send_enabled', true);
+    config()->set('services.meta_whatsapp.access_token', 'test-token');
+    config()->set('services.meta_whatsapp.graph_api_version', 'v26.0');
+    config()->set('services.meta_whatsapp.phone_number_id', 'phone-number-id');
+    Http::preventStrayRequests();
+    Http::fake([
+        'graph.facebook.com/*' => Http::response([
+            'error' => [
+                'code' => 132001,
+                'message' => 'Template name does not exist in the translation.',
+            ],
+        ], 404),
+    ]);
+    $application = ConnectedApplication::factory()->create(['slug' => 'kirada']);
+    $contact = WhatsAppContact::factory()->create([
+        'phone_number_encrypted' => '12074097887',
+    ]);
+    $conversation = WhatsAppConversation::factory()->create([
+        'whatsapp_contact_id' => $contact->id,
+        'connected_application_id' => $application->id,
+    ]);
+    $message = WhatsAppMessage::factory()->create([
+        'whatsapp_contact_id' => $contact->id,
+        'whatsapp_conversation_id' => $conversation->id,
+        'connected_application_id' => $application->id,
+        'direction' => 'outbound',
+        'message_type' => 'template',
+        'template_name' => 'missing_template',
+        'template_language' => 'fr',
+        'status' => 'queued',
+    ]);
+    $job = new SendWhatsAppMessage($message);
+
+    try {
+        $job->handle(app(MetaWhatsAppClient::class));
+        $this->fail('A Meta rejection was expected.');
+    } catch (RequestException $exception) {
+        $job->failed($exception);
+    }
+
+    expect($message->fresh()->failure_code)->toBe('132001')
+        ->and($message->fresh()->failure_message)->toBe('Template name does not exist in the translation.');
 });

@@ -6,6 +6,7 @@ use App\Messaging\HmacSigner;
 use App\Models\ApplicationEventDelivery;
 use App\Models\ConnectedApplication;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 test('application events are signed and 200 or 202 responses are recorded', function (int $status) {
     Http::fake(['https://example.test/*' => Http::response([], $status)]);
@@ -21,17 +22,22 @@ test('application events are signed and 200 or 202 responses are recorded', func
     Http::assertSent(function ($request) use ($delivery): bool {
         $body = $request->body();
         $timestamp = $request->header('X-BWA-Timestamp')[0];
+        $requestId = $request->header('X-BWA-Request-ID')[0];
         $signature = app(HmacSigner::class)->sign(
             'POST',
             '/api/internal/bwa/whatsapp/events',
             $timestamp,
-            $delivery->event_id,
+            $requestId,
             $body,
             $delivery->connectedApplication->event_signing_secret,
         );
 
         return $request->header('X-BWA-Signature')[0] === $signature
-            && $request->header('X-BWA-Request-ID')[0] === $delivery->event_id;
+            && Str::isUuid($requestId)
+            && $request['id'] === $delivery->event_id
+            && $request['event_id'] === $delivery->event_id
+            && $request['type'] === $delivery->event_type
+            && $request['event_type'] === $delivery->event_type;
     });
 })->with([200, 202]);
 

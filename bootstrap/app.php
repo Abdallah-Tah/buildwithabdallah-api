@@ -15,6 +15,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->preventRequestForgery(except: [
+            'webhooks/meta/whatsapp',
+        ]);
+
         $middleware->alias([
             'meta.whatsapp.signature' => VerifyMetaWhatsAppSignature::class,
             'bwa.application' => AuthenticateConnectedApplication::class,

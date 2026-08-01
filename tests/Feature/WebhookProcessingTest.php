@@ -1,8 +1,10 @@
 <?php
 
 use App\Enums\MessageStatus;
+use App\Jobs\DispatchApplicationEvent;
 use App\Jobs\SendWhatsAppMessage;
 use App\Messaging\WhatsAppWebhookProcessor;
+use App\Models\ApplicationEventDelivery;
 use App\Models\ConnectedApplication;
 use App\Models\WhatsAppContact;
 use App\Models\WhatsAppMessage;
@@ -126,4 +128,32 @@ test('failed status stores sanitized failure details', function () {
     expect($message->fresh()->status)->toBe(MessageStatus::Failed)
         ->and($message->fresh()->failure_code)->toBe('131000')
         ->and(strlen($message->fresh()->failure_message))->toBeLessThanOrEqual(503);
+});
+
+test('outbound status changes queue signed application events', function () {
+    Queue::fake();
+    $application = ConnectedApplication::factory()->create(['slug' => 'kirada']);
+    $message = WhatsAppMessage::factory()->create([
+        'connected_application_id' => $application->id,
+        'meta_message_id' => 'wamid.application-status',
+        'direction' => 'outbound',
+        'status' => 'accepted',
+    ]);
+    $event = WhatsAppWebhookEvent::factory()->create([
+        'raw_payload' => ['entry' => [['changes' => [['value' => ['statuses' => [[
+            'id' => 'wamid.application-status',
+            'status' => 'delivered',
+        ]]]]]]]],
+    ]);
+
+    app(WhatsAppWebhookProcessor::class)->process($event);
+
+    $delivery = ApplicationEventDelivery::firstOrFail();
+    expect($delivery->event_type)->toBe('whatsapp.message.status')
+        ->and($delivery->whatsapp_message_id)->toBe($message->id)
+        ->and(data_get($delivery->payload, 'data.message_id'))->toBe($message->id)
+        ->and(data_get($delivery->payload, 'data.provider_message_id'))->toBe('wamid.application-status')
+        ->and(data_get($delivery->payload, 'data.status'))->toBe('delivered')
+        ->and(data_get($delivery->payload, 'data.occurred_at'))->not->toBeNull();
+    Queue::assertPushedOn('application-events', DispatchApplicationEvent::class);
 });

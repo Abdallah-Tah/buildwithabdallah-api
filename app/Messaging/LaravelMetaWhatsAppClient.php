@@ -38,11 +38,7 @@ class LaravelMetaWhatsAppClient implements MetaWhatsAppClient
 
         $response = $request->post($this->endpoint(), $payload);
 
-        if ($response->failed()) {
-            throw new ConnectionException('Meta WhatsApp request failed with status '.$response->status().'.');
-        }
-
-        return $response->json();
+        return $response->throw()->json();
     }
 
     private function request(): PendingRequest

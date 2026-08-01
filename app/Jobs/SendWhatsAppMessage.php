@@ -8,8 +8,10 @@ use App\Messaging\MetaWhatsAppClient;
 use App\Models\WhatsAppMessage;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Throwable;
 
 class SendWhatsAppMessage implements ShouldQueue
@@ -56,10 +58,21 @@ class SendWhatsAppMessage implements ShouldQueue
 
     public function failed(?Throwable $exception): void
     {
+        $metaErrorCode = $exception instanceof RequestException
+            ? Arr::get($exception->response->json(), 'error.code')
+            : null;
+        $metaErrorMessage = $exception instanceof RequestException
+            ? Arr::get($exception->response->json(), 'error.message')
+            : null;
+
         $this->message->update([
             'status' => MessageStatus::Failed,
-            'failure_code' => $exception instanceof MessagingConfigurationException ? 'CONFIGURATION_ERROR' : 'SEND_FAILED',
-            'failure_message' => 'WhatsApp message delivery failed.',
+            'failure_code' => $exception instanceof MessagingConfigurationException
+                ? 'CONFIGURATION_ERROR'
+                : (is_scalar($metaErrorCode) ? (string) $metaErrorCode : 'SEND_FAILED'),
+            'failure_message' => is_string($metaErrorMessage) && $metaErrorMessage !== ''
+                ? Str::limit($metaErrorMessage, 500)
+                : 'WhatsApp message delivery failed.',
             'failed_at' => now(),
         ]);
         Log::error('whatsapp.message.failed', ['internal_message_id' => $this->message->id]);

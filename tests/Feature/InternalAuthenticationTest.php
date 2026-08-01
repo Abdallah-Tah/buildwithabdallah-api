@@ -2,6 +2,11 @@
 
 use App\Models\ApplicationRequestNonce;
 use App\Models\ConnectedApplication;
+use Illuminate\Support\Facades\Queue;
+
+beforeEach(function () {
+    Queue::fake();
+});
 
 function internalTemplateBody(): string
 {
