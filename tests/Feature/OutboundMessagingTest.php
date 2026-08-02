@@ -171,3 +171,60 @@ test('meta rejection details are retained for operational diagnosis', function (
     expect($message->fresh()->failure_code)->toBe('132001')
         ->and($message->fresh()->failure_message)->toBe('Template name does not exist in the translation.');
 });
+
+test('base64 template documents are uploaded before sending the message', function () {
+    config()->set('services.meta_whatsapp.live_send_enabled', true);
+    config()->set('services.meta_whatsapp.access_token', 'test-token');
+    config()->set('services.meta_whatsapp.graph_api_version', 'v26.0');
+    config()->set('services.meta_whatsapp.phone_number_id', 'phone-number-id');
+    Http::preventStrayRequests();
+    Http::fake([
+        'graph.facebook.com/v26.0/phone-number-id/media' => Http::response(['id' => 'uploaded-media-id']),
+        'graph.facebook.com/v26.0/phone-number-id/messages' => Http::response([
+            'messages' => [['id' => 'meta-message-id']],
+        ]),
+        'example.test/api/internal/bwa/whatsapp/events' => Http::response(status: 202),
+    ]);
+    $application = ConnectedApplication::factory()->create(['slug' => 'kirada']);
+    $contact = WhatsAppContact::factory()->create(['phone_number_encrypted' => '12074097887']);
+    $conversation = WhatsAppConversation::factory()->create([
+        'whatsapp_contact_id' => $contact->id,
+        'connected_application_id' => $application->id,
+    ]);
+    $message = WhatsAppMessage::factory()->create([
+        'whatsapp_contact_id' => $contact->id,
+        'whatsapp_conversation_id' => $conversation->id,
+        'connected_application_id' => $application->id,
+        'direction' => 'outbound',
+        'message_type' => 'template',
+        'template_name' => 'kirada_rent_invoice',
+        'template_language' => 'fr',
+        'status' => 'queued',
+        'request_payload' => [
+            'template' => [
+                'components' => [[
+                    'type' => 'header',
+                    'parameters' => [[
+                        'type' => 'document',
+                        'document' => [
+                            'filename' => 'invoice.pdf',
+                            'content_type' => 'application/pdf',
+                            'content_base64' => base64_encode('pdf contents'),
+                        ],
+                    ]],
+                ]],
+            ],
+        ],
+    ]);
+
+    (new SendWhatsAppMessage($message))->handle(app(MetaWhatsAppClient::class));
+
+    expect(Http::recorded(fn ($request): bool => str_starts_with($request->url(), 'https://graph.facebook.com/')))
+        ->toHaveCount(2);
+    Http::assertSent(fn ($request): bool => $request->url() === 'https://graph.facebook.com/v26.0/phone-number-id/messages'
+        && $request['template']['components'][0]['parameters'][0]['document'] === [
+            'id' => 'uploaded-media-id',
+            'filename' => 'invoice.pdf',
+        ]);
+    expect($message->fresh()->meta_message_id)->toBe('meta-message-id');
+});
