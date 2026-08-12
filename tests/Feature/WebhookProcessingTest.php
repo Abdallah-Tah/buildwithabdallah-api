@@ -101,7 +101,7 @@ test('menu command clears an existing route', function () {
 });
 
 test('status progression is idempotent and never moves backward', function () {
-    $message = WhatsAppMessage::factory()->create(['meta_message_id' => 'wamid.status', 'direction' => 'outbound', 'status' => 'sent']);
+    $message = WhatsAppMessage::factory()->create(['provider' => 'meta', 'provider_message_id' => 'wamid.status', 'meta_message_id' => 'wamid.status', 'direction' => 'outbound', 'status' => 'sent']);
 
     foreach (['delivered', 'sent', 'read', 'read'] as $status) {
         $event = WhatsAppWebhookEvent::factory()->create([
@@ -117,7 +117,7 @@ test('status progression is idempotent and never moves backward', function () {
 });
 
 test('failed status stores sanitized failure details', function () {
-    $message = WhatsAppMessage::factory()->create(['meta_message_id' => 'wamid.failed', 'direction' => 'outbound', 'status' => 'sent']);
+    $message = WhatsAppMessage::factory()->create(['provider' => 'meta', 'provider_message_id' => 'wamid.failed', 'meta_message_id' => 'wamid.failed', 'direction' => 'outbound', 'status' => 'sent']);
     $event = WhatsAppWebhookEvent::factory()->create([
         'raw_payload' => ['entry' => [['changes' => [['value' => ['statuses' => [[
             'id' => 'wamid.failed', 'status' => 'failed', 'errors' => [['code' => '131000', 'title' => str_repeat('x', 700)]],
@@ -135,6 +135,8 @@ test('outbound status changes queue signed application events', function () {
     $application = ConnectedApplication::factory()->create(['slug' => 'kirada']);
     $message = WhatsAppMessage::factory()->create([
         'connected_application_id' => $application->id,
+        'provider' => 'meta',
+        'provider_message_id' => 'wamid.application-status',
         'meta_message_id' => 'wamid.application-status',
         'direction' => 'outbound',
         'status' => 'accepted',

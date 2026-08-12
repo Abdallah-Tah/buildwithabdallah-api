@@ -41,7 +41,8 @@ class WhatsAppMessageObserver implements ShouldHandleEventsAfterCommit
                 'product' => $whatsAppMessage->connectedApplication?->slug,
                 'data' => [
                     'message_id' => $whatsAppMessage->id,
-                    'provider_message_id' => $whatsAppMessage->meta_message_id,
+                    'provider' => $whatsAppMessage->provider,
+                    'provider_message_id' => $whatsAppMessage->provider_message_id ?? $whatsAppMessage->meta_message_id,
                     'correlation_id' => $whatsAppMessage->correlation_id,
                     'idempotency_key' => $whatsAppMessage->idempotency_key,
                     'status' => $whatsAppMessage->status->value,

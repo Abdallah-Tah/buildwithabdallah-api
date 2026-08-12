@@ -35,6 +35,11 @@ return [
         ],
     ],
 
+    'whatsapp' => [
+        'provider' => env('WHATSAPP_PROVIDER', 'meta'),
+        'live_send_enabled' => env('WHATSAPP_LIVE_SEND_ENABLED', false),
+    ],
+
     'meta_whatsapp' => [
         'access_token' => env('META_WHATSAPP_ACCESS_TOKEN'),
         'app_secret' => env('META_WHATSAPP_APP_SECRET'),
@@ -49,6 +54,19 @@ return [
         'customer_service_window_hours' => (int) env('WHATSAPP_CUSTOMER_SERVICE_WINDOW_HOURS', 24),
         'internal_signature_max_age_seconds' => (int) env('BWA_INTERNAL_SIGNATURE_MAX_AGE_SECONDS', 300),
         'application_event_timeout_seconds' => (int) env('BWA_APPLICATION_EVENT_TIMEOUT_SECONDS', 10),
+    ],
+
+    'sent_dm' => [
+        'api_key' => env('SENT_DM_API_KEY'),
+        'base_url' => env('SENT_DM_BASE_URL', 'https://api.sent.dm'),
+        'webhook_secret' => env('SENT_DM_WEBHOOK_SECRET'),
+        'webhook_signature_max_age_seconds' => (int) env('SENT_DM_WEBHOOK_SIGNATURE_MAX_AGE_SECONDS', 300),
+        'sandbox' => env('SENT_DM_SANDBOX', false),
+        'template_map' => json_decode((string) env('SENT_DM_TEMPLATE_MAP', '{}'), true) ?: [],
+        'media_disk' => env('SENT_DM_MEDIA_DISK', 'local'),
+        'media_url_expiration_minutes' => (int) env('SENT_DM_MEDIA_URL_EXPIRATION_MINUTES', 60),
+        'media_max_bytes' => (int) env('SENT_DM_MEDIA_MAX_BYTES', 10485760),
+        'media_retention_hours' => (int) env('SENT_DM_MEDIA_RETENTION_HOURS', 48),
     ],
 
 ];

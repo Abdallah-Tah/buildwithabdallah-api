@@ -6,7 +6,7 @@ namespace App\Console\Commands;
 
 use App\Enums\MessageDirection;
 use App\Enums\MessageStatus;
-use App\Messaging\MetaWhatsAppClient;
+use App\Messaging\WhatsAppProviderManager;
 use App\Models\WhatsAppMessage;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
@@ -16,9 +16,9 @@ use Illuminate\Console\Command;
 #[Description('Explicitly send one real WhatsApp smoke-test message.')]
 class TestWhatsAppSend extends Command
 {
-    public function handle(MetaWhatsAppClient $client): int
+    public function handle(WhatsAppProviderManager $providers): int
     {
-        if (! config('services.meta_whatsapp.live_send_enabled')) {
+        if (! config('services.whatsapp.live_send_enabled')) {
             $this->error('Refusing to send because WHATSAPP_LIVE_SEND_ENABLED is false.');
 
             return self::FAILURE;
@@ -36,8 +36,9 @@ class TestWhatsAppSend extends Command
             'status' => MessageStatus::Queued,
             'text_body_encrypted' => $this->argument('message'),
         ]);
-        $client->send($message, preg_replace('/\D+/', '', (string) $this->argument('recipient')) ?? '');
-        $this->info('Smoke-test request accepted by Meta.');
+        $provider = $providers->active();
+        $provider->send($message, preg_replace('/\D+/', '', (string) $this->argument('recipient')) ?? '');
+        $this->info('Smoke-test request accepted by '.$provider->name().'.');
 
         return self::SUCCESS;
     }

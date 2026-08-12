@@ -65,6 +65,7 @@ class CreateOutboundWhatsAppMessage
             'whatsapp_conversation_id' => $conversation->id,
             'whatsapp_contact_id' => $contact->id,
             'connected_application_id' => $application->id,
+            'provider' => (string) config('services.whatsapp.provider'),
             'correlation_id' => $data['correlation_id'] ?? null,
             'idempotency_key' => $data['idempotency_key'],
             'request_hash' => $requestHash,

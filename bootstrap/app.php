@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\AuthenticateConnectedApplication;
 use App\Http\Middleware\VerifyMetaWhatsAppSignature;
+use App\Http\Middleware\VerifySentWebhookSignature;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -17,10 +18,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->preventRequestForgery(except: [
             'webhooks/meta/whatsapp',
+            'webhooks/sent/whatsapp',
         ]);
 
         $middleware->alias([
             'meta.whatsapp.signature' => VerifyMetaWhatsAppSignature::class,
+            'sent.whatsapp.signature' => VerifySentWebhookSignature::class,
             'bwa.application' => AuthenticateConnectedApplication::class,
         ]);
     })

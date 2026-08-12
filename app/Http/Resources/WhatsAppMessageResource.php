@@ -21,6 +21,8 @@ class WhatsAppMessageResource extends JsonResource
             'idempotency_key' => $this->resource->idempotency_key,
             'direction' => $this->resource->direction->value,
             'type' => $this->resource->message_type,
+            'provider' => $this->resource->provider,
+            'provider_message_id' => $this->resource->provider_message_id,
             'created_at' => $this->resource->created_at?->toIso8601String(),
         ];
     }

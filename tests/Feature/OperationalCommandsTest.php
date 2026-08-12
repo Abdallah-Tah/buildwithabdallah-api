@@ -5,11 +5,16 @@ use App\Models\WhatsAppMessage;
 use App\Models\WhatsAppWebhookEvent;
 
 test('readiness reports safe internal check names', function () {
+    config()->set('services.whatsapp.provider', 'sent');
+    config()->set('services.sent_dm.api_key', 'sent-test-key');
+    config()->set('services.sent_dm.base_url', 'https://api.sent.dm');
+
     $this->getJson('/health/ready')
         ->assertSuccessful()
         ->assertExactJson([
             'status' => 'ready',
-            'checks' => ['database' => 'ok', 'cache' => 'ok', 'queue' => 'ok'],
+            'checks' => ['database' => 'ok', 'cache' => 'ok', 'queue' => 'ok', 'whatsapp_provider' => 'ok'],
+            'whatsapp_provider' => 'sent',
         ])
         ->assertJsonMissing(['host', 'database_name', 'credentials', 'exception']);
 });
@@ -59,6 +64,7 @@ test('prune dry run preserves payload and actual prune preserves normalized mess
 
 test('manual smoke send refuses while live sending is disabled', function () {
     config()->set('services.meta_whatsapp.live_send_enabled', false);
+    config()->set('services.whatsapp.live_send_enabled', false);
 
     $this->artisan('bwa:whatsapp:test-send', ['recipient' => '+12074097887', 'message' => 'test'])
         ->assertFailed();

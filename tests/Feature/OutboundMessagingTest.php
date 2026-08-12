@@ -1,7 +1,7 @@
 <?php
 
 use App\Jobs\SendWhatsAppMessage;
-use App\Messaging\MetaWhatsAppClient;
+use App\Messaging\WhatsAppProviderManager;
 use App\Models\ConnectedApplication;
 use App\Models\WhatsAppContact;
 use App\Models\WhatsAppConversation;
@@ -129,6 +129,8 @@ test('live sending is safely blocked by default', function () {
 test('meta rejection details are retained for operational diagnosis', function () {
     Queue::fake();
     config()->set('services.meta_whatsapp.live_send_enabled', true);
+    config()->set('services.whatsapp.live_send_enabled', true);
+    config()->set('services.whatsapp.provider', 'meta');
     config()->set('services.meta_whatsapp.access_token', 'test-token');
     config()->set('services.meta_whatsapp.graph_api_version', 'v26.0');
     config()->set('services.meta_whatsapp.phone_number_id', 'phone-number-id');
@@ -162,7 +164,7 @@ test('meta rejection details are retained for operational diagnosis', function (
     $job = new SendWhatsAppMessage($message);
 
     try {
-        $job->handle(app(MetaWhatsAppClient::class));
+        $job->handle(app(WhatsAppProviderManager::class));
         $this->fail('A Meta rejection was expected.');
     } catch (RequestException $exception) {
         $job->failed($exception);
@@ -174,6 +176,8 @@ test('meta rejection details are retained for operational diagnosis', function (
 
 test('base64 template documents are uploaded before sending the message', function () {
     config()->set('services.meta_whatsapp.live_send_enabled', true);
+    config()->set('services.whatsapp.live_send_enabled', true);
+    config()->set('services.whatsapp.provider', 'meta');
     config()->set('services.meta_whatsapp.access_token', 'test-token');
     config()->set('services.meta_whatsapp.graph_api_version', 'v26.0');
     config()->set('services.meta_whatsapp.phone_number_id', 'phone-number-id');
@@ -217,7 +221,7 @@ test('base64 template documents are uploaded before sending the message', functi
         ],
     ]);
 
-    (new SendWhatsAppMessage($message))->handle(app(MetaWhatsAppClient::class));
+    (new SendWhatsAppMessage($message))->handle(app(WhatsAppProviderManager::class));
 
     expect(Http::recorded(fn ($request): bool => str_starts_with($request->url(), 'https://graph.facebook.com/')))
         ->toHaveCount(2);
@@ -226,5 +230,7 @@ test('base64 template documents are uploaded before sending the message', functi
             'id' => 'uploaded-media-id',
             'filename' => 'invoice.pdf',
         ]);
-    expect($message->fresh()->meta_message_id)->toBe('meta-message-id');
+    expect($message->fresh()->meta_message_id)->toBe('meta-message-id')
+        ->and($message->fresh()->provider)->toBe('meta')
+        ->and($message->fresh()->provider_message_id)->toBe('meta-message-id');
 });

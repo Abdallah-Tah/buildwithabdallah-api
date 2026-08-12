@@ -18,7 +18,7 @@ class WhatsAppMessage extends Model
 
     protected $table = 'whatsapp_messages';
 
-    protected $fillable = ['whatsapp_conversation_id', 'whatsapp_contact_id', 'connected_application_id', 'meta_message_id', 'correlation_id', 'idempotency_key', 'request_hash', 'direction', 'message_type', 'status', 'text_body_encrypted', 'template_name', 'template_language', 'media_id', 'reply_to_meta_message_id', 'request_payload', 'response_payload', 'failure_code', 'failure_message', 'sent_at', 'delivered_at', 'read_at', 'failed_at'];
+    protected $fillable = ['whatsapp_conversation_id', 'whatsapp_contact_id', 'connected_application_id', 'provider', 'provider_message_id', 'meta_message_id', 'correlation_id', 'idempotency_key', 'request_hash', 'direction', 'message_type', 'status', 'text_body_encrypted', 'template_name', 'template_language', 'media_id', 'reply_to_meta_message_id', 'request_payload', 'response_payload', 'failure_code', 'failure_message', 'sent_at', 'delivered_at', 'read_at', 'failed_at'];
 
     protected $hidden = ['text_body_encrypted', 'request_payload', 'response_payload'];
 

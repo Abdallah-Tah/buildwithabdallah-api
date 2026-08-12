@@ -43,7 +43,8 @@ class WhatsAppWebhookProcessor
     {
         $metaMessageId = Arr::get($payload, 'id');
 
-        if (! is_string($metaMessageId) || WhatsAppMessage::query()->where('meta_message_id', $metaMessageId)->exists()) {
+        if (! is_string($metaMessageId) || WhatsAppMessage::query()->where('provider', 'meta')->where('provider_message_id', $metaMessageId)->exists()
+            || WhatsAppMessage::query()->where('meta_message_id', $metaMessageId)->exists()) {
             return;
         }
 
@@ -92,6 +93,8 @@ class WhatsAppWebhookProcessor
                 'whatsapp_conversation_id' => $conversation->id,
                 'whatsapp_contact_id' => $contact->id,
                 'connected_application_id' => $conversation->connected_application_id,
+                'provider' => 'meta',
+                'provider_message_id' => $metaMessageId,
                 'meta_message_id' => $metaMessageId,
                 'direction' => MessageDirection::Inbound,
                 'message_type' => $type,
@@ -124,7 +127,11 @@ class WhatsAppWebhookProcessor
     /** @param array<string, mixed> $payload */
     private function processStatus(array $payload): void
     {
-        $message = WhatsAppMessage::query()->where('meta_message_id', Arr::get($payload, 'id'))->first();
+        $message = WhatsAppMessage::query()
+            ->where('provider', 'meta')
+            ->where('provider_message_id', Arr::get($payload, 'id'))
+            ->first()
+            ?? WhatsAppMessage::query()->where('meta_message_id', Arr::get($payload, 'id'))->first();
         $status = MessageStatus::tryFrom((string) Arr::get($payload, 'status'));
 
         if (! $message || ! $status || ($status !== MessageStatus::Failed && $status->rank() < $message->status->rank())) {
@@ -187,6 +194,8 @@ class WhatsAppWebhookProcessor
             'conversation_id' => $message->whatsapp_conversation_id,
             'data' => [
                 'message_id' => $message->id,
+                'provider' => $message->provider ?? 'meta',
+                'provider_message_id' => $message->provider_message_id ?? $message->meta_message_id,
                 'meta_message_id' => $message->meta_message_id,
                 'contact_id' => $message->whatsapp_contact_id,
                 'message_type' => $message->message_type,
@@ -217,6 +226,7 @@ class WhatsAppWebhookProcessor
             'whatsapp_conversation_id' => $conversation->id,
             'whatsapp_contact_id' => $conversation->whatsapp_contact_id,
             'connected_application_id' => $conversation->connected_application_id,
+            'provider' => (string) config('services.whatsapp.provider'),
             'direction' => MessageDirection::Outbound,
             'message_type' => 'text',
             'status' => MessageStatus::Queued,

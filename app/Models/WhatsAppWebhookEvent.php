@@ -12,7 +12,7 @@ class WhatsAppWebhookEvent extends Model
 
     protected $table = 'whatsapp_webhook_events';
 
-    protected $fillable = ['payload_hash', 'object_type', 'event_type', 'raw_payload', 'received_at', 'processing_started_at', 'processed_at', 'failed_at', 'attempt_count', 'processing_error'];
+    protected $fillable = ['provider', 'payload_hash', 'object_type', 'event_type', 'raw_payload', 'received_at', 'processing_started_at', 'processed_at', 'failed_at', 'attempt_count', 'processing_error'];
 
     protected $attributes = ['attempt_count' => 0];
 

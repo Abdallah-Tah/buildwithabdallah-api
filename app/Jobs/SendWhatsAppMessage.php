@@ -4,12 +4,11 @@ namespace App\Jobs;
 
 use App\Enums\MessageStatus;
 use App\Exceptions\MessagingConfigurationException;
-use App\Messaging\MetaWhatsAppClient;
+use App\Messaging\WhatsAppProviderManager;
 use App\Models\WhatsAppMessage;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Http\Client\RequestException;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
@@ -29,13 +28,13 @@ class SendWhatsAppMessage implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(MetaWhatsAppClient $client): void
+    public function handle(WhatsAppProviderManager $providers): void
     {
-        if ($this->message->meta_message_id || $this->message->status !== MessageStatus::Queued) {
+        if ($this->message->provider_message_id || $this->message->status !== MessageStatus::Queued) {
             return;
         }
 
-        if (! config('services.meta_whatsapp.live_send_enabled')) {
+        if (! config('services.whatsapp.live_send_enabled')) {
             $this->message->update([
                 'status' => MessageStatus::Failed,
                 'failure_code' => 'LIVE_SEND_DISABLED',
@@ -46,35 +45,46 @@ class SendWhatsAppMessage implements ShouldQueue
             return;
         }
 
+        $providerName = $this->message->provider ?: (string) config('services.whatsapp.provider');
+        $this->message->update(['provider' => $providerName]);
+        $provider = $providers->driver($providerName);
         $recipient = $this->message->contact->phone_number_encrypted;
-        $result = $client->send($this->message, (string) $recipient);
+        $result = $provider->send($this->message, (string) $recipient);
         $this->message->update([
-            'meta_message_id' => Arr::get($result, 'messages.0.id'),
+            'provider' => $result->provider,
+            'provider_message_id' => $result->messageId,
+            'meta_message_id' => $result->provider === 'meta' ? $result->messageId : null,
             'status' => MessageStatus::Accepted,
-            'response_payload' => ['message_id_present' => Arr::has($result, 'messages.0.id')],
+            'response_payload' => $result->response,
         ]);
-        Log::info('whatsapp.message.sent', ['internal_message_id' => $this->message->id]);
+        Log::info('whatsapp.message.sent', [
+            'internal_message_id' => $this->message->id,
+            'provider' => $result->provider,
+        ]);
     }
 
     public function failed(?Throwable $exception): void
     {
-        $metaErrorCode = $exception instanceof RequestException
-            ? Arr::get($exception->response->json(), 'error.code')
+        $providerErrorCode = $exception instanceof RequestException
+            ? data_get($exception->response->json(), 'error.code')
             : null;
-        $metaErrorMessage = $exception instanceof RequestException
-            ? Arr::get($exception->response->json(), 'error.message')
+        $providerErrorMessage = $exception instanceof RequestException
+            ? data_get($exception->response->json(), 'error.message')
             : null;
 
         $this->message->update([
             'status' => MessageStatus::Failed,
             'failure_code' => $exception instanceof MessagingConfigurationException
                 ? 'CONFIGURATION_ERROR'
-                : (is_scalar($metaErrorCode) ? (string) $metaErrorCode : 'SEND_FAILED'),
-            'failure_message' => is_string($metaErrorMessage) && $metaErrorMessage !== ''
-                ? Str::limit($metaErrorMessage, 500)
+                : (is_scalar($providerErrorCode) ? (string) $providerErrorCode : 'SEND_FAILED'),
+            'failure_message' => is_string($providerErrorMessage) && $providerErrorMessage !== ''
+                ? Str::limit($providerErrorMessage, 500)
                 : 'WhatsApp message delivery failed.',
             'failed_at' => now(),
         ]);
-        Log::error('whatsapp.message.failed', ['internal_message_id' => $this->message->id]);
+        Log::error('whatsapp.message.failed', [
+            'internal_message_id' => $this->message->id,
+            'provider' => $this->message->provider,
+        ]);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Messaging\SentWhatsAppWebhookProcessor;
 use App\Messaging\WhatsAppWebhookProcessor;
 use App\Models\WhatsAppWebhookEvent;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -23,15 +24,19 @@ class ProcessWhatsAppWebhook implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(WhatsAppWebhookProcessor $processor): void
-    {
+    public function handle(
+        WhatsAppWebhookProcessor $metaProcessor,
+        SentWhatsAppWebhookProcessor $sentProcessor,
+    ): void {
         if ($this->event->processed_at) {
             return;
         }
 
         $this->event->increment('attempt_count');
         $this->event->update(['processing_started_at' => now(), 'failed_at' => null, 'processing_error' => null]);
-        $processor->process($this->event);
+        $this->event->provider === 'sent'
+            ? $sentProcessor->process($this->event)
+            : $metaProcessor->process($this->event);
         $this->event->update(['processed_at' => now()]);
     }
 
