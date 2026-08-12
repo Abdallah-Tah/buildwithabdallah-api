@@ -57,6 +57,8 @@ return [
     ],
 
     'sent_dm' => [
+        // Off by default: Meta Cloud API is the production path.
+        'enabled' => env('SENT_DM_ENABLED', false),
         'api_key' => env('SENT_DM_API_KEY'),
         'base_url' => env('SENT_DM_BASE_URL', 'https://api.sent.dm'),
         'webhook_secret' => env('SENT_DM_WEBHOOK_SECRET'),

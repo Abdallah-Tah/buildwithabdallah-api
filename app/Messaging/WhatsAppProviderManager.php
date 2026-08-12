@@ -20,8 +20,24 @@ class WhatsAppProviderManager
     {
         return match ($provider) {
             'meta' => $this->meta,
-            'sent' => $this->sent,
+            'sent' => $this->sentDriver(),
             default => throw new MessagingConfigurationException("Unsupported WhatsApp provider [{$provider}]."),
         };
+    }
+
+    /**
+     * Sent.dm is retained for fallback but is off unless deliberately enabled,
+     * so a stale provider column or a mistyped env cannot quietly route
+     * production traffic away from the Meta Cloud API.
+     */
+    private function sentDriver(): WhatsAppProvider
+    {
+        if (! config('services.sent_dm.enabled')) {
+            throw new MessagingConfigurationException(
+                'The Sent.dm provider is disabled. Set SENT_DM_ENABLED=true to re-enable it.',
+            );
+        }
+
+        return $this->sent;
     }
 }

@@ -117,6 +117,10 @@ test('recipient lookup columns never contain plaintext and message body is encry
 
 test('live sending is safely blocked by default', function () {
     Queue::fake();
+    // Asserted explicitly rather than inherited from the ambient .env, so the
+    // deployed value of WHATSAPP_LIVE_SEND_ENABLED cannot flip this test.
+    config()->set('services.whatsapp.live_send_enabled', false);
+    config()->set('services.meta_whatsapp.live_send_enabled', false);
     $application = ConnectedApplication::factory()->create(['slug' => 'kirada']);
     sendSignedJson($this, $application, templatePayload())->assertAccepted();
     Queue::fake()->except([SendWhatsAppMessage::class]);

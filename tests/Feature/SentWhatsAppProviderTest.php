@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Storage;
 
 beforeEach(function (): void {
     config()->set('services.whatsapp.provider', 'sent');
+    config()->set('services.sent_dm.enabled', true);
     config()->set('services.whatsapp.live_send_enabled', true);
     config()->set('services.sent_dm.api_key', 'sent-test-key');
     config()->set('services.sent_dm.base_url', 'https://api.sent.dm');
