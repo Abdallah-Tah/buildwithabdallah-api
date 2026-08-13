@@ -8,6 +8,7 @@ use App\Enums\MessageStatus;
 use App\Jobs\DispatchApplicationEvent;
 use App\Jobs\SendWhatsAppMessage;
 use App\Models\ApplicationEventDelivery;
+use App\Models\ConnectedApplication;
 use App\Models\WhatsAppContact;
 use App\Models\WhatsAppConversation;
 use App\Models\WhatsAppMessage;
@@ -106,6 +107,13 @@ class WhatsAppWebhookProcessor
             ]);
 
             $this->router->route($conversation, $text);
+
+            // A menu command is a deliberate un-routing; re-attributing it here
+            // would put the sender straight back where they asked to leave.
+            if (! $conversation->fresh()->connected_application_id && ! $this->router->isMenuCommand($text)) {
+                $this->attributeToPreviousSender($conversation, $contact);
+            }
+
             $message->update(['connected_application_id' => $conversation->fresh()->connected_application_id]);
             $this->queueAutomaticReply($conversation->fresh(), $text);
 
@@ -122,6 +130,50 @@ class WhatsAppWebhookProcessor
 
             Log::info('whatsapp.message.stored', ['internal_message_id' => $message->id, 'conversation_id' => $conversation->id]);
         }, attempts: 3);
+    }
+
+    /**
+     * Attribute a conversation that never went through the product menu.
+     *
+     * Someone who receives a Kirada invitation and simply replies has picked no
+     * product, so the router leaves the conversation unowned — and an unowned
+     * message is never relayed to any application. Their reply would vanish.
+     * Whoever last messaged them is the product they are replying to.
+     *
+     * Only an unambiguous history is trusted: if two products have messaged this
+     * contact, guessing would leak the reply into the wrong one.
+     */
+    private function attributeToPreviousSender(WhatsAppConversation $conversation, WhatsAppContact $contact): void
+    {
+        $applicationIds = WhatsAppMessage::query()
+            ->where('whatsapp_contact_id', $contact->id)
+            ->where('direction', MessageDirection::Outbound)
+            ->whereNotNull('connected_application_id')
+            ->distinct()
+            ->pluck('connected_application_id');
+
+        if ($applicationIds->count() !== 1) {
+            return;
+        }
+
+        $application = ConnectedApplication::query()
+            ->whereKey($applicationIds->first())
+            ->where('enabled', true)
+            ->first();
+
+        if (! $application) {
+            return;
+        }
+
+        $productSlug = collect(config('bwa_products.products', []))
+            ->search(fn (array $product): bool => ($product['application_slug'] ?? null) === $application->slug);
+
+        $conversation->update([
+            'connected_application_id' => $application->id,
+            'product_slug' => is_string($productSlug) ? $productSlug : $conversation->product_slug,
+            'state' => ConversationState::Active,
+            'routed_at' => now(),
+        ]);
     }
 
     /** @param array<string, mixed> $payload */

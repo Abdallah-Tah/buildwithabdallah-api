@@ -9,9 +9,20 @@ use Illuminate\Support\Str;
 
 class ConversationRouter
 {
+    /**
+     * True when the sender explicitly asked to go back to the product menu.
+     *
+     * Callers need this to tell a deliberate un-routing apart from a
+     * conversation that was simply never routed.
+     */
+    public function isMenuCommand(?string $selection): bool
+    {
+        return in_array($this->normalize($selection), config('bwa_products.menu_commands', []), true);
+    }
+
     public function route(WhatsAppConversation $conversation, ?string $selection): void
     {
-        $selection = Str::of((string) $selection)->squish()->lower()->toString();
+        $selection = $this->normalize($selection);
 
         if (in_array($selection, config('bwa_products.menu_commands', []), true)) {
             $conversation->update([
@@ -46,5 +57,10 @@ class ConversationRouter
         if ($conversation->state !== ConversationState::Active) {
             $conversation->update(['state' => ConversationState::AwaitingProductSelection]);
         }
+    }
+
+    private function normalize(?string $selection): string
+    {
+        return Str::of((string) $selection)->squish()->lower()->toString();
     }
 }
