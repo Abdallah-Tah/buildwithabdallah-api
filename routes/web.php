@@ -7,9 +7,9 @@ use App\Http\Controllers\SentWhatsAppWebhookController;
 use App\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::view('/', 'pages.home')->name('page.home');
+Route::view('/about', 'pages.about')->name('page.about');
+Route::view('/docs', 'pages.docs')->name('page.docs');
 
 Route::get('/webhooks/meta/whatsapp', [MetaWhatsAppWebhookController::class, 'verify'])
     ->name('webhooks.meta.whatsapp.verify');
