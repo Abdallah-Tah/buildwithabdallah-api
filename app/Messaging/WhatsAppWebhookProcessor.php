@@ -269,6 +269,21 @@ class WhatsAppWebhookProcessor
             return;
         }
 
+        $normalizedSelection = Str::of((string) $selection)->squish()->lower()->toString();
+        $selectedProduct = collect(config('bwa_products.products', []))->first(
+            fn (array $candidate): bool => $normalizedSelection === $candidate['selection']
+                || in_array($normalizedSelection, $candidate['aliases'], true)
+        );
+
+        // Once a conversation is routed, normal customer messages belong to
+        // the selected application. Only menu navigation should get an
+        // automatic routing response from the distributor.
+        if ($conversation->state === ConversationState::Active
+            && ! $this->router->isMenuCommand($selection)
+            && ! is_array($selectedProduct)) {
+            return;
+        }
+
         $product = $conversation->product_slug ? config('bwa_products.products.'.$conversation->product_slug) : null;
         $body = $conversation->state === ConversationState::Active && is_array($product)
             ? $product['confirmation']

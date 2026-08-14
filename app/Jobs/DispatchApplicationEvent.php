@@ -33,7 +33,7 @@ class DispatchApplicationEvent implements ShouldQueue
 
         $application = $this->delivery->connectedApplication;
 
-        if (! $application->enabled || ! $application->webhook_url) {
+        if (! $application->enabled || ! $application->webhookUrlFor($this->delivery->event_type)) {
             $this->delivery->update(['status' => 'failed', 'last_error' => 'Application delivery is not configured.']);
 
             return;

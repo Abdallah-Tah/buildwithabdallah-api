@@ -4,6 +4,7 @@ use App\Http\Controllers\MetaWhatsAppWebhookController;
 use App\Http\Controllers\ReadinessController;
 use App\Http\Controllers\SentWhatsAppMediaController;
 use App\Http\Controllers\SentWhatsAppWebhookController;
+use App\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -18,6 +19,9 @@ Route::post('/webhooks/meta/whatsapp', [MetaWhatsAppWebhookController::class, 's
 Route::post('/webhooks/sent/whatsapp', SentWhatsAppWebhookController::class)
     ->middleware('sent.whatsapp.signature')
     ->name('webhooks.sent.whatsapp.store');
+Route::post('/webhooks/stripe', StripeWebhookController::class)
+    ->middleware('throttle:120,1')
+    ->name('webhooks.stripe.store');
 Route::get('/media/sent/whatsapp/{message}', SentWhatsAppMediaController::class)
     ->middleware('signed')
     ->name('whatsapp.sent.media.show');
