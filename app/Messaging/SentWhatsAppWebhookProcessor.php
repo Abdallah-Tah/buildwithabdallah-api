@@ -163,7 +163,7 @@ class SentWhatsAppWebhookProcessor
 
             $this->router->route($conversation, is_string($text) ? $text : null);
             $message->update(['connected_application_id' => $conversation->fresh()->connected_application_id]);
-            $this->queueAutomaticReply($conversation->fresh());
+            $this->queueAutomaticReply($conversation->fresh(), is_string($text) ? $text : null);
 
             if ($message->connected_application_id) {
                 $eventId = (string) Str::ulid();
@@ -201,9 +201,21 @@ class SentWhatsAppWebhookProcessor
         }, attempts: 3);
     }
 
-    private function queueAutomaticReply(WhatsAppConversation $conversation): void
+    private function queueAutomaticReply(WhatsAppConversation $conversation, ?string $selection): void
     {
         if (! config('services.meta_whatsapp.autoreply_enabled')) {
+            return;
+        }
+
+        $normalizedSelection = Str::of((string) $selection)->squish()->lower()->toString();
+        $selectedProduct = collect(config('bwa_products.products', []))->first(
+            fn (array $candidate): bool => $normalizedSelection === $candidate['selection']
+                || in_array($normalizedSelection, $candidate['aliases'], true)
+        );
+
+        if ($conversation->state === ConversationState::Active
+            && ! app(ConversationRouter::class)->isMenuCommand($selection)
+            && ! is_array($selectedProduct)) {
             return;
         }
 

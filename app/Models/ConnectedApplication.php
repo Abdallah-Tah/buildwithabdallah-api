@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 
 class ConnectedApplication extends Model
 {
@@ -30,5 +32,14 @@ class ConnectedApplication extends Model
     public function conversations(): HasMany
     {
         return $this->hasMany(WhatsAppConversation::class);
+    }
+
+    public function webhookUrlFor(string $eventType): ?string
+    {
+        if (Str::startsWith($eventType, 'billing.')) {
+            return Arr::get($this->metadata, 'billing_webhook_url', $this->webhook_url);
+        }
+
+        return $this->webhook_url;
     }
 }

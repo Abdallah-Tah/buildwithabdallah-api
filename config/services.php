@@ -71,4 +71,11 @@ return [
         'media_retention_hours' => (int) env('SENT_DM_MEDIA_RETENTION_HOURS', 48),
     ],
 
+    'stripe' => [
+        'secret' => env('STRIPE_SECRET'),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+        'base_url' => env('STRIPE_BASE_URL', 'https://api.stripe.com'),
+        'webhook_tolerance_seconds' => (int) env('STRIPE_WEBHOOK_TOLERANCE_SECONDS', 300),
+    ],
+
 ];
