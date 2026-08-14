@@ -39,7 +39,8 @@ class AdminPanelProvider extends PanelProvider
                     ->codeWindow(4),
             ], isRequired: true)
             ->brandName('Build With Abdallah')
-            ->favicon(asset('images/bwa-mark.svg'))
+            ->brandLogo(asset('images/bwa-logo.jpeg'))
+            ->favicon(asset('images/bwa-logo.jpeg'))
             ->strictAuthorization()
             ->spa()
             ->colors([

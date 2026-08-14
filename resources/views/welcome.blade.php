@@ -6,7 +6,7 @@
     <meta name="description" content="Build With Abdallah Central API is a secure integration layer for messaging, billing, webhooks, and application events.">
     <meta name="theme-color" content="#07142d">
     <title>Build With Abdallah — Central API</title>
-    <link rel="icon" href="{{ asset('images/bwa-mark.svg') }}" type="image/svg+xml">
+    <link rel="icon" href="{{ asset('images/bwa-logo.jpeg') }}" type="image/jpeg">
     <style>
         :root { color-scheme: dark; --ink:#edf5ff; --muted:#9fb2cd; --line:rgba(144,180,229,.17); --panel:rgba(12,30,61,.73); --blue:#3988ff; --cyan:#20d7d0; --navy:#061227; }
         * { box-sizing:border-box; }
@@ -25,7 +25,9 @@
         .nav-links a:hover { color:white; }
         .status { display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border:1px solid rgba(52,211,153,.25); border-radius:999px; color:#baf6dc; background:rgba(21,128,94,.12); }
         .dot { width:8px; height:8px; border-radius:50%; background:#34d399; box-shadow:0 0 0 5px rgba(52,211,153,.1); }
-        .hero { min-height:690px; padding:92px 0 76px; display:grid; grid-template-columns:1.08fr .92fr; gap:72px; align-items:center; }
+        .brand-banner { margin-top:46px; overflow:hidden; border:1px solid rgba(144,180,229,.24); border-radius:24px; background:#fff; box-shadow:0 32px 80px rgba(0,0,0,.28); }
+        .brand-banner img { display:block; width:100%; height:auto; aspect-ratio:3/1; object-fit:cover; }
+        .hero { min-height:610px; padding:68px 0 76px; display:grid; grid-template-columns:1.08fr .92fr; gap:72px; align-items:center; }
         .eyebrow { display:inline-flex; gap:10px; align-items:center; color:#97eae5; font-size:13px; font-weight:750; letter-spacing:.13em; text-transform:uppercase; }
         .eyebrow::before { content:""; width:29px; height:1px; background:var(--cyan); }
         h1 { margin:22px 0; max-width:730px; font-size:clamp(48px,6.5vw,82px); line-height:1.01; letter-spacing:-.058em; }
@@ -64,8 +66,8 @@
         .cta h2 { margin:0 0 8px; font-size:32px; }.cta p { margin:0;color:#a6b8ce; }
         footer { padding:28px 0 36px; border-top:1px solid var(--line); color:#7f92ab; font-size:13px; }
         footer .shell { display:flex; justify-content:space-between; gap:20px; }
-        @media (max-width:900px) { .hero,.architecture { grid-template-columns:1fr; }.hero{padding-top:65px;gap:50px}.grid{grid-template-columns:1fr 1fr}.nav-links a:not(.status){display:none}.cta{align-items:flex-start;flex-direction:column} }
-        @media (max-width:600px) { .shell{width:min(100% - 26px,1180px)}nav{height:70px}.brand span{font-size:14px}.hero{padding-top:52px}.grid{grid-template-columns:1fr}.provider-row{grid-template-columns:1fr}.terminal{padding:13px}.cta{padding:28px}footer .shell{flex-direction:column} }
+        @media (max-width:900px) { .hero,.architecture { grid-template-columns:1fr; }.hero{padding-top:54px;gap:50px}.grid{grid-template-columns:1fr 1fr}.nav-links a:not(.status){display:none}.cta{align-items:flex-start;flex-direction:column} }
+        @media (max-width:600px) { .shell{width:min(100% - 26px,1180px)}nav{height:70px}.brand span{font-size:14px}.brand-banner{margin-top:26px;border-radius:16px}.hero{padding-top:42px}.grid{grid-template-columns:1fr}.provider-row{grid-template-columns:1fr}.terminal{padding:13px}.cta{padding:28px}footer .shell{flex-direction:column} }
         @media (prefers-reduced-motion:reduce) { html{scroll-behavior:auto}.button{transition:none} }
     </style>
 </head>
@@ -73,7 +75,7 @@
     <header class="shell">
         <nav aria-label="Primary navigation">
             <a class="brand" href="/">
-                <img src="{{ asset('images/bwa-mark.svg') }}" alt="Build With Abdallah logo">
+                <img src="{{ asset('images/bwa-logo.jpeg') }}" alt="Build With Abdallah logo">
                 <span>Build With Abdallah<small>Central API</small></span>
             </a>
             <div class="nav-links">
@@ -85,6 +87,9 @@
     </header>
 
     <main>
+        <div class="shell brand-banner">
+            <img src="{{ asset('images/bwa-banner.jpeg') }}" alt="Build With Abdallah — Software, Automation, APIs, Solutions" width="1536" height="512">
+        </div>
         <div class="shell hero">
             <div>
                 <div class="eyebrow">Integration infrastructure</div>
