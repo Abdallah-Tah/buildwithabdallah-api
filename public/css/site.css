@@ -359,7 +359,11 @@ html.dark ::-webkit-scrollbar-thumb:hover { background: #3a3a42; }
 .mono { font-family: var(--font-mono); font-size: .875em; }
 .hl { color: var(--brand-read); }
 
-/* Inline code */
+/* Inline code.
+   Deliberately NOT nowrap: tokens like CUSTOMER_SERVICE_WINDOW_EXPIRED and
+   AuthenticateConnectedApplication run past a 320px viewport, and the
+   overflow-x guard on body would clip them rather than let them wrap.
+   `anywhere` only breaks when the token genuinely cannot fit. */
 .ic {
     padding: .15em .4em;
     border: 1px solid var(--code-line);
@@ -367,7 +371,7 @@ html.dark ::-webkit-scrollbar-thumb:hover { background: #3a3a42; }
     background: var(--code-bg);
     color: var(--code-ink);
     font-size: .84em;
-    white-space: nowrap;
+    overflow-wrap: anywhere;
 }
 
 /* ========================================================================
@@ -489,7 +493,7 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
 .hero { padding: 84px 0 96px; }
 .hero-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 56px;
     align-items: center;
 }
@@ -509,7 +513,7 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
 }
 
 @media (min-width: 1024px) {
-    .hero-grid { grid-template-columns: 1.02fr .98fr; gap: 72px; }
+    .hero-grid { grid-template-columns: minmax(0, 1.02fr) minmax(0, .98fr); gap: 72px; }
 }
 
 /* ========================================================================
@@ -583,7 +587,7 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
     white-space: nowrap;
 }
 
-.node-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.node-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
 
 /* Connector with a travelling pulse */
 .wire {
@@ -629,17 +633,20 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
 .flow.live .node { animation: nodeIn .6s ease both; }
 .flow.live .wire::after { animation: pulseDown 2.6s cubic-bezier(.4, 0, .2, 1) infinite; }
 
+/* Kept under ~1.3s end to end. The nodes hold their `from` state (opacity 0)
+   until their delay elapses, so a long stagger means visibly missing content
+   on a phone where the whole diagram is on screen at once. */
 .flow.live .node[data-step="1"] { animation-delay: .05s; }
-.flow.live .node[data-step="2"] { animation-delay: .35s; }
-.flow.live .node[data-step="3"] { animation-delay: .65s; }
-.flow.live .node[data-step="4"] { animation-delay: .95s; }
-.flow.live .node[data-step="5"] { animation-delay: 1.05s; }
-.flow.live .node[data-step="6"] { animation-delay: 1.35s; }
+.flow.live .node[data-step="2"] { animation-delay: .20s; }
+.flow.live .node[data-step="3"] { animation-delay: .35s; }
+.flow.live .node[data-step="4"] { animation-delay: .50s; }
+.flow.live .node[data-step="5"] { animation-delay: .55s; }
+.flow.live .node[data-step="6"] { animation-delay: .70s; }
 
-.flow.live .wire[data-step="1"]::after { animation-delay: .3s; }
-.flow.live .wire[data-step="2"]::after { animation-delay: .6s; }
-.flow.live .wire[data-step="3"]::after { animation-delay: .9s; }
-.flow.live .wire[data-step="4"]::after { animation-delay: 1.2s; }
+.flow.live .wire[data-step="1"]::after { animation-delay: .18s; }
+.flow.live .wire[data-step="2"]::after { animation-delay: .33s; }
+.flow.live .wire[data-step="3"]::after { animation-delay: .48s; }
+.flow.live .wire[data-step="4"]::after { animation-delay: .63s; }
 
 @keyframes nodeIn {
     from { opacity: 0; transform: translateY(10px); }
@@ -657,7 +664,7 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
    ======================================================================== */
 .stats {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1px;
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
@@ -684,19 +691,35 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
     color: var(--mute);
 }
 
-@media (min-width: 720px)  { .stats { grid-template-columns: repeat(3, 1fr); } }
-@media (min-width: 1080px) { .stats { grid-template-columns: repeat(5, 1fr); } }
+/* Below 640px a two-column band gives each label ~110px, which wraps these
+   sentences to six lines. One column with the figure set beside its label
+   reads far better and is shorter overall. */
+@media (max-width: 639px) {
+    .stats { grid-template-columns: minmax(0, 1fr); }
+    .stat {
+        display: grid;
+        grid-template-columns: 76px minmax(0, 1fr);
+        gap: 18px;
+        align-items: center;
+        padding: 18px 20px;
+    }
+    .stat b { font-size: 30px; }
+    .stat span { margin-top: 0; }
+}
+
+@media (min-width: 720px)  { .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1080px) { .stats { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
 
 /* ========================================================================
    9. Cards
    ======================================================================== */
 .cards {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 16px;
 }
-@media (min-width: 640px)  { .cards { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 1024px) { .cards--3 { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 640px)  { .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .cards--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
 .card {
     display: flex;
@@ -740,7 +763,7 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
 .steps { display: grid; gap: 14px; }
 .step {
     display: grid;
-    grid-template-columns: 40px 1fr;
+    grid-template-columns: 40px minmax(0, 1fr);
     gap: 18px;
     padding: 22px;
     border: 1px solid var(--line);
@@ -770,12 +793,12 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
 /* Two-column split (copy + panel) */
 .split {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 48px;
     align-items: start;
 }
 @media (min-width: 1024px) {
-    .split { grid-template-columns: .95fr 1.05fr; gap: 64px; }
+    .split { grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); gap: 64px; }
     .split--sticky > :first-child { position: sticky; top: 108px; }
 }
 
@@ -788,7 +811,9 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
     border-radius: var(--radius-lg);
     background: var(--surface);
 }
-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+/* min-width keeps columns readable and lets .table-wrap scroll horizontally,
+   instead of squeezing a three-column table into 272px of phone. */
+table { width: 100%; min-width: 520px; border-collapse: collapse; font-size: 14px; }
 thead th {
     padding: 14px 18px;
     border-bottom: 1px solid var(--line);
@@ -829,6 +854,9 @@ tbody td .ic { white-space: nowrap; }
 }
 .code-tabs { display: flex; gap: 2px; flex-wrap: wrap; }
 .code-tab {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
     padding: 6px 12px;
     border: 0;
     border-radius: var(--radius-xs);
@@ -844,8 +872,10 @@ tbody td .ic { white-space: nowrap; }
 .copy-btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
-    padding: 6px 10px;
+    min-height: 34px;
+    padding: 6px 12px;
     border: 1px solid var(--code-line);
     border-radius: var(--radius-xs);
     background: transparent;
@@ -881,48 +911,86 @@ pre.code[hidden] { display: none; }
    ======================================================================== */
 .docs {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 40px;
-    padding: 56px 0 104px;
+    /* padding-block, not the shorthand: this element also carries .shell, and
+       `padding: x 0 y` would zero out the horizontal gutter, pinning the docs
+       to the viewport edge on a phone. */
+    padding-block: 56px 104px;
     align-items: start;
 }
 @media (min-width: 1024px) {
-    .docs { grid-template-columns: 232px 1fr; gap: 56px; }
+    .docs { grid-template-columns: 232px minmax(0, 1fr); gap: 56px; }
 }
 
-.docs-nav { display: none; }
-@media (min-width: 1024px) {
-    .docs-nav {
-        display: block;
-        position: sticky;
-        top: 108px;
-        max-height: calc(100vh - 140px);
-        overflow-y: auto;
-    }
+/* Mobile: a single-row chip rail that scrolls horizontally, so the table of
+   contents survives on a phone instead of disappearing. Not sticky — body has
+   an overflow-x guard, and sticky inside a scroll container is unreliable.
+   Desktop (>=1024px): the vertical rail in the left column. */
+.docs-nav {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
 }
-.docs-nav h2 {
-    margin-bottom: 14px;
-    font: 500 11px/1 var(--font-mono);
-    text-transform: uppercase;
-    letter-spacing: .12em;
-    color: var(--mute);
+.docs-nav::-webkit-scrollbar { display: none; }
+.docs-nav h2 { display: none; }
+.docs-nav ul {
+    display: flex;
+    gap: 6px;
+    width: max-content;
+    list-style: none;
 }
-.docs-nav ul { list-style: none; }
 .docs-nav a {
     display: block;
-    padding: 7px 12px;
-    border-left: 1px solid var(--line);
+    padding: 8px 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
     color: var(--mute);
-    font-size: 13.5px;
-    transition: color .15s, border-color .15s;
+    font-size: 13px;
+    white-space: nowrap;
+    transition: color .15s, border-color .15s, background-color .15s;
 }
 .docs-nav a:hover { color: var(--ink2); border-color: var(--line-h); }
 .docs-nav a.active {
     color: var(--brand-read);
-    border-color: var(--brand-500);
+    border-color: var(--brand-soft-line);
+    background: var(--brand-soft);
     font-weight: 600;
 }
-.docs-nav .sub { padding-left: 26px; font-size: 13px; }
+
+@media (min-width: 1024px) {
+    .docs-nav {
+        position: sticky;
+        top: 108px;
+        max-height: calc(100vh - 140px);
+        overflow-x: visible;
+        overflow-y: auto;
+    }
+    .docs-nav h2 {
+        display: block;
+        margin-bottom: 14px;
+        font: 500 11px/1 var(--font-mono);
+        text-transform: uppercase;
+        letter-spacing: .12em;
+        color: var(--mute);
+    }
+    .docs-nav ul { display: block; width: auto; }
+    .docs-nav a {
+        padding: 7px 12px;
+        border: 0;
+        border-left: 1px solid var(--line);
+        border-radius: 0;
+        font-size: 13.5px;
+        white-space: normal;
+    }
+    .docs-nav a:hover { border-left-color: var(--line-h); }
+    .docs-nav a.active {
+        background: none;
+        border-left-color: var(--brand-500);
+    }
+    .docs-nav .sub { padding-left: 26px; font-size: 13px; }
+}
 
 .docs-body { min-width: 0; max-width: 820px; }
 .docs-section { padding-bottom: 64px; }
@@ -994,7 +1062,7 @@ pre.code[hidden] { display: none; }
     box-shadow: var(--shadow-card);
 }
 @media (min-width: 720px) {
-    .status-panel { grid-template-columns: auto 1fr; align-items: center; gap: 32px; }
+    .status-panel { grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 32px; }
 }
 .status-checks { display: flex; flex-wrap: wrap; gap: 8px; }
 .check {
@@ -1046,7 +1114,7 @@ pre.code[hidden] { display: none; }
     gap: 36px;
 }
 @media (min-width: 780px) {
-    .footer-grid { grid-template-columns: 1.6fr 1fr 1fr; gap: 48px; }
+    .footer-grid { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr); gap: 48px; }
 }
 .footer-grid h3 {
     margin-bottom: 16px;
@@ -1072,7 +1140,80 @@ pre.code[hidden] { display: none; }
 }
 
 /* ========================================================================
-   17. Motion
+   17. Small screens
+
+   The layout above is mobile-first, so these rules only tighten spacing and
+   resolve the two places that genuinely run out of room on a narrow phone:
+   the nav lockup (brand + two icon buttons on 320px) and the side-by-side
+   provider nodes in the hero pipeline.
+   ======================================================================== */
+@media (max-width: 760px) {
+    html { scroll-padding-top: 84px; }
+
+    .section { padding: 68px 0; }
+    .section--tight { padding: 52px 0; }
+    .section-head { margin-bottom: 36px; }
+    .hero { padding: 52px 0 64px; }
+    .hero-grid { gap: 40px; }
+    .split { gap: 34px; }
+    .card { padding: 22px; }
+    .step { padding: 18px; gap: 14px; grid-template-columns: 34px minmax(0, 1fr); }
+    .cta { padding: 30px; }
+    .site-footer { padding: 44px 0 32px; }
+    .docs { padding-block: 32px 72px; gap: 28px; }
+    .docs-section { padding-bottom: 48px; }
+
+}
+
+/* Any touch device, regardless of width — a tablet at 1024px still has
+   fingers. Sized to the 44px comfortable-target guidance. */
+@media (pointer: coarse) {
+    .copy-btn, .code-tab { min-height: 44px; padding-inline: 16px; }
+    .docs-nav a { padding-block: 11px; }
+    .nav-link { padding-block: 12px; }
+}
+
+@media (max-width: 460px) {
+    :root { --gutter: 16px; }
+
+    /* Brand lockup plus theme toggle and menu button have to fit 320px. */
+    .nav { height: 66px; }
+    .brand { gap: 10px; }
+    .brand img { width: 36px; height: 36px; }
+    .brand-name { font-size: 14px; }
+    .brand-sub { font-size: 9px; letter-spacing: .12em; }
+    .icon-btn { padding: 8px; }
+    .icon-btn svg { width: 18px; height: 18px; }
+
+    .hero h1 { font-size: clamp(31px, 8.6vw, 40px); }
+
+    /* Two nodes abreast leave roughly 60px of label at this width. */
+    .node-pair { grid-template-columns: minmax(0, 1fr); }
+
+    /* With the providers stacked there is nothing to branch to, so the
+       T-connector reverts to a straight run and gets its pulse back. */
+    .wire--split {
+        height: 30px;
+        margin-left: 32px;
+        border-left: 1px dashed var(--line-h);
+        background: none;
+    }
+    .wire--split::after { content: ""; }
+    .flow { padding: 14px; }
+
+    .stat { padding: 22px 16px; }
+
+    /* Full-width stacked actions beat two cramped buttons on one row. */
+    .hero-actions, .cta-actions { width: 100%; }
+    .hero-actions .btn, .cta-actions .btn { width: 100%; }
+
+    pre.code { padding: 14px 16px; font-size: 12.5px; }
+    .endpoint { padding: 10px 12px; gap: 8px; }
+    .endpoint .pill { margin-left: 0; }
+}
+
+/* ========================================================================
+   18. Motion
    ======================================================================== */
 .reveal { opacity: 1; transform: none; }
 .reveal.in { animation: revealUp .8s cubic-bezier(.2, .7, .3, 1) both; }
@@ -1104,7 +1245,7 @@ pre.code[hidden] { display: none; }
 }
 
 /* ========================================================================
-   18. Print — the pages double as a portfolio artefact, so make them print
+   19. Print — the pages double as a portfolio artefact, so make them print
    ======================================================================== */
 @media print {
     .site-header, .site-footer, .nav-actions, .docs-nav, .cta, .copy-btn { display: none !important; }
