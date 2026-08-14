@@ -28,9 +28,11 @@
     <meta property="og:image" content="{{ asset('images/bwa-banner.jpeg') }}">
     <meta name="twitter:card" content="summary_large_image">
 
-    <link rel="icon" href="{{ asset('images/bwa-mark.svg') }}" type="image/svg+xml">
-    <link rel="alternate icon" href="{{ asset('favicon.ico') }}" sizes="any">
-    <link rel="apple-touch-icon" href="{{ asset('images/bwa-logo.jpeg') }}">
+    @php($iconVersion = file_exists(public_path('favicon.ico')) ? filemtime(public_path('favicon.ico')) : 1)
+    <link rel="icon" href="{{ asset('favicon.ico') }}?v={{ $iconVersion }}" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicons/favicon-32x32.png') }}?v={{ $iconVersion }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicons/favicon-16x16.png') }}?v={{ $iconVersion }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('favicons/apple-touch-icon.png') }}?v={{ $iconVersion }}">
 
     {{-- Resolve the theme before first paint so the page never flashes. Mirrors
          the contract on buildwithabdallah.com: same key, same tri-state. --}}
