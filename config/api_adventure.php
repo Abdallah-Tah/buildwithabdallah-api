@@ -29,6 +29,7 @@ return [
     'stages' => [
         [
             'id' => 'products',
+            'art' => 'products.webp',
             'states' => ['Idle', 'Sending', 'Connected'],
             'title' => 'Connected Products',
             'detail' => 'Kirada · Djib Payroll · SMKit',
@@ -39,6 +40,7 @@ return [
         ],
         [
             'id' => 'signature',
+            'art' => 'signature.webp',
             'states' => ['Waiting', 'Verifying…', 'Verified'],
             'title' => 'Signature Gate',
             'detail' => 'X-BWA-Signature · 300s window · single-use nonce',
@@ -49,6 +51,7 @@ return [
         ],
         [
             'id' => 'central-api',
+            'art' => 'central.webp',
             'states' => ['Waiting', 'Validating', 'Queued'],
             'title' => 'Central API',
             'detail' => 'Validate → Persist → Enqueue',
@@ -63,6 +66,7 @@ return [
     'services' => [
         [
             'id' => 'ai',
+            'art' => 'ai.webp',
             'states' => ['Waiting', 'Calling', 'Delivered'],
             'title' => 'AI Assist',
             'detail' => 'Model provider',
@@ -71,6 +75,7 @@ return [
         ],
         [
             'id' => 'whatsapp',
+            'art' => 'whatsapp.webp',
             'states' => ['Waiting', 'Queued', 'Delivered'],
             'title' => 'WhatsApp',
             'detail' => 'Meta Cloud API',
@@ -79,6 +84,7 @@ return [
         ],
         [
             'id' => 'billing',
+            'art' => 'billing.webp',
             'states' => ['Waiting', 'Charging', 'Delivered'],
             'title' => 'Billing',
             'detail' => 'Stripe',

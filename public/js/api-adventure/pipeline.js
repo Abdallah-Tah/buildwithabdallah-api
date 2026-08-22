@@ -66,120 +66,81 @@ export const TONES = {
     webhook: 0x3d7fff,
 };
 
-/* The unlit pipe wall: dark enough to read as metal under additive blending. */
-const PENDING_TONE = 0x1b2540;
-
 /**
- * One continuous run from off-screen left to the portal, plus a drop into
- * each service. The master curve is what the runner rides; the branches are
- * what the service packets ride.
+ * The route the request travels, built from the shared geometry so it lies
+ * exactly on the pipe artwork rather than near it.
+ *
+ * @param {object} geo from geometry()
+ * @param {string[]} order the providers in the order this layout reaches them
  */
-export function buildRoute(ports, size, boxes = {}, order = ['billing', 'whatsapp', 'ai']) {
-    // Stacked layout: the row has straightened into a vertical run, so the
-    // route is a chain down the page rather than an S across it.
-    if (Math.abs(ports.signature.cy - ports.products.cy) > 20) {
-        return buildStackedRoute(ports, size, order);
+export function buildRoute(geo, order) {
+    if (geo.stacked) {
+        return buildStackedRoute(geo, order);
     }
 
-    const mainY = ports.products.cy;
+    const { ports, mainY, fanY, serviceY, railY, turnX, returnX, entryX, portalX } = geo;
 
-    // Clear the label chips: the lane sits in the gap above the service row,
-    // not at a fixed offset from the pipes, so a longer label cannot collide
-    // with it.
-    const serviceTop = Math.min(
-        ...['ai', 'whatsapp', 'billing']
-            .map((id) => boxes[id]?.top)
-            .filter((v) => typeof v === 'number'),
-        ports.ai.y - 44,
-    );
-    const fanY = Math.max(ports['central-api'].bottom + 26, serviceTop - 16);
-    const railY = ports.webhook ? ports.webhook.cy : size.height - 60;
-    const elbowX = Math.min(size.width - 26, ports['central-api'].right + 96);
-    const fanEndX = branchX(ports.ai) - ports.ai.w * 0.62;
-    const portalX = ports.portal ? ports.portal.cx : size.width - 60;
-
-    // Marked waypoints: `at` names the stage whose window ends there, which is
-    // how a timeline beat is mapped onto a stretch of curve further down.
     const waypoints = [
-        { p: [-70, mainY] },
+        { p: [entryX, mainY] },
         { p: [ports.products.cx, mainY] },
-        { p: [ports.products.right + 8, mainY], at: 'products' },
+        { p: [ports.products.right - 6, mainY], at: 'products' },
         { p: [ports.signature.cx, mainY] },
-        { p: [ports.signature.right + 8, mainY], at: 'signature' },
+        { p: [ports.signature.right - 6, mainY], at: 'signature' },
         { p: [ports['central-api'].cx, mainY] },
-        { p: [ports['central-api'].right + 10, mainY] },
-        // Elbow out to the right, then down into the fan lane.
-        { p: [elbowX, mainY] },
-        { p: [elbowX, mainY + (fanY - mainY) * 0.55] },
-        { p: [elbowX, fanY] },
-        { p: [branchX(ports.billing), fanY], at: 'central-api' },
-        { p: [branchX(ports.whatsapp), fanY], at: 'billing' },
-        { p: [branchX(ports.ai), fanY], at: 'whatsapp' },
-        { p: [fanEndX, fanY], at: 'ai' },
-        // Down the left edge and along the final rail to the portal. The rail
-        // carries extra collinear points on purpose: a spline through two
-        // widely spaced ends bows away from the straight line between them,
-        // and the bow would cut diagonally across the event card.
-        { p: [22, fanY + (railY - fanY) * 0.34] },
-        { p: [22, railY - 26] },
-        { p: [46, railY] },
-        { p: [size.width * 0.34, railY] },
-        { p: [size.width * 0.62, railY] },
-        { p: [portalX, railY], at: 'webhook' },
+        { p: [turnX, mainY] },
+        { p: [turnX, mainY + (fanY - mainY) * 0.55] },
+        { p: [turnX, fanY] },
     ];
 
-    const points = waypoints.map((w) => new THREE.Vector3(w.p[0], w.p[1], 0));
-    const curve = new THREE.CatmullRomCurve3(points, false, 'centripetal', 0.12);
-
-    // Chord lengths approximate arc length closely enough to split the curve
-    // into per-stage windows, and cost nothing next to sampling the spline.
-    const cumulative = [0];
-    for (let i = 1; i < points.length; i++) {
-        cumulative.push(cumulative[i - 1] + points[i].distanceTo(points[i - 1]));
-    }
-    const total = cumulative[cumulative.length - 1];
-
-    /** @type {Record<string, {from: number, to: number}>} */
-    const windows = {};
-    let from = 0;
-
-    waypoints.forEach((w, i) => {
-        if (!w.at) return;
-        const to = cumulative[i] / total;
-        windows[w.at] = { from, to };
-        from = to;
+    // Down the lane, reaching each provider in the order the layout meets it.
+    order.forEach((id, i) => {
+        waypoints.push({ p: [ports[id].cx, fanY], at: i === 0 ? 'central-api' : order[i - 1] });
     });
+    waypoints.push({ p: [returnX + 10, fanY], at: order[order.length - 1] });
 
-    return { curve, windows, fanY, railY };
+    // Left edge down to the rail, then straight into the portal. The rail
+    // carries extra collinear points because a spline through two distant
+    // ends bows away from the line between them.
+    waypoints.push(
+        { p: [returnX, fanY + (railY - fanY) * 0.4] },
+        { p: [returnX, railY - 20] },
+        { p: [returnX + 30, railY] },
+        { p: [geo.width * 0.38, railY] },
+        { p: [geo.width * 0.66, railY] },
+        { p: [portalX, railY], at: 'webhook' },
+    );
+
+    return finish(waypoints);
 }
 
-/**
- * The same journey, read top to bottom.
- *
- * Each pipe is entered from above and left from below, with a small alternating
- * horizontal offset so consecutive drops are visibly separate segments rather
- * than one straight line down the middle.
- */
-function buildStackedRoute(ports, size, order) {
+/** The stacked layout: one chain down the page through every machine. */
+function buildStackedRoute(geo, order) {
+    const { ports, width } = geo;
     const sequence = ['products', 'signature', 'central-api', ...order, 'webhook'];
     const waypoints = [];
-    const x = size.width / 2;
 
     sequence.forEach((id, i) => {
         const port = ports[id];
 
         if (!port) return;
 
-        const weave = i % 2 === 0 ? -size.width * 0.16 : size.width * 0.16;
+        const weave = i % 2 === 0 ? -width * 0.15 : width * 0.15;
 
-        if (i === 0) waypoints.push({ p: [x, -50] });
-        else waypoints.push({ p: [x + weave, port.y - 22] });
+        if (i === 0) waypoints.push({ p: [width / 2, -50] });
+        else waypoints.push({ p: [width / 2 + weave, port.y - 18] });
 
-        waypoints.push({ p: [port.cx, port.cy], at: id });
+        // Offset from centre: the sign board is centred on the machine, and a
+        // runner riding the middle would stand on its own label.
+        waypoints.push({ p: [port.cx + port.w * 0.3, port.y + port.h * 0.46], at: id });
     });
 
+    return { ...finish(waypoints), stacked: true };
+}
+
+/** Turn marked waypoints into a curve plus a per-stage window along it. */
+function finish(waypoints) {
     const points = waypoints.map((w) => new THREE.Vector3(w.p[0], w.p[1], 0));
-    const curve = new THREE.CatmullRomCurve3(points, false, 'centripetal', 0.14);
+    const curve = new THREE.CatmullRomCurve3(points, false, 'centripetal', 0.12);
 
     const cumulative = [0];
     for (let i = 1; i < points.length; i++) {
@@ -197,8 +158,7 @@ function buildStackedRoute(ports, size, order) {
         from = to;
     });
 
-    // No separate lane to branch off, so the drops are part of the main run.
-    return { curve, windows, fanY: null, railY: null, stacked: true };
+    return { curve, windows };
 }
 
 /**

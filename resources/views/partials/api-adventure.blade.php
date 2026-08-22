@@ -3,9 +3,19 @@
     $stages = $adv['stages'];
     $services = $adv['services'];
     $destination = $adv['destination'];
+    $asset = static fn (string $path): string => asset('images/api-adventure/'.$path);
 
-    // The journey read as one sentence, used as the accessible description of
-    // the whole diagram so a screen reader gets the architecture, not the game.
+    // Where the blank sign board sits on each machine, measured from the
+    // artwork by scripts/extract-api-adventure-assets.py. Regenerating the
+    // sheets moves the boards; re-running the script moves the labels with
+    // them, so the overlay never drifts off its sign.
+    $manifest = json_decode(@file_get_contents(public_path('images/api-adventure/manifest.json')) ?: '{}', true);
+    $sign = static function (string $art) use ($manifest): string {
+        $box = $manifest['stations'][basename($art, '.webp')]['sign'] ?? ['top' => 0.2, 'width' => 0.55];
+
+        return '--adv-sign-top: '.round($box['top'] * 100, 2).'%; --adv-sign-w: '.round($box['width'] * 100, 2).'%';
+    };
+
     $summary = 'Request journey: '
         .collect($stages)->pluck('title')->implode(', ')
         .', fanned out to '.collect($services)->pluck('title')->implode(', ')
@@ -13,6 +23,7 @@
 @endphp
 
 <div class="adv" data-adventure
+     style="--adv-pipe-body: url('{{ $asset('pipes/body.webp') }}'); --adv-pipe-body-vertical: url('{{ $asset('pipes/body-vertical.webp') }}')"
      data-adv-duration="{{ $adv['duration'] }}"
      data-adv-replay="{{ $adv['replay_delay'] }}">
 
@@ -22,26 +33,34 @@
         <span class="adv-host">api.buildwithabdallah.com</span>
     </div>
 
-    {{-- Decorative scoreboard. It is aria-hidden because the numbers carry no
-         architecture meaning — the stage statuses below are the real content. --}}
-    <div class="adv-hud" aria-hidden="true">
-        <div class="adv-hud-cell adv-hud-cell--score">
-            <span>Score</span>
-            <strong data-adv-score>0</strong>
-        </div>
-        <div class="adv-hud-cell adv-hud-cell--life">
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 20s-7-4.4-7-9.3A4 4 0 0112 8a4 4 0 017 2.7C19 15.6 12 20 12 20z"/></svg>
-            <span>&times; 3</span>
-        </div>
-        <div class="adv-hud-cell adv-hud-cell--clock">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2" stroke-linecap="round"/></svg>
-            <span data-adv-timer>00:00</span>
-        </div>
-    </div>
-
     <div class="adv-stage">
-        {{-- The animated layer. Purely decorative: every stage, status and
-             transition below exists in HTML and updates without it. --}}
+        {{-- Background depth. Decorative and deliberately sparse: the
+             architecture has to stay the thing you read first. --}}
+        <div class="adv-scenery" aria-hidden="true">
+            <img class="adv-scenery-rack adv-scenery-rack--a" src="{{ $asset('environment/server-rack.webp') }}" alt="" loading="lazy" decoding="async">
+            <img class="adv-scenery-rack adv-scenery-rack--b" src="{{ $asset('environment/server-rack.webp') }}" alt="" loading="lazy" decoding="async">
+            <img class="adv-scenery-beacon" src="{{ $asset('environment/beacon.webp') }}" alt="" loading="lazy" decoding="async">
+        </div>
+
+        {{-- Pipework. Real artwork, tiled rather than stretched: every long run
+             is a repeating body between two fittings. --}}
+        <div class="adv-pipes" aria-hidden="true">
+            <span class="adv-run adv-run--main"></span>
+            <img class="adv-fit adv-fit--drop" src="{{ $asset('pipes/elbow-left-down.webp') }}" alt="">
+            <span class="adv-run adv-run--descent"></span>
+            <img class="adv-fit adv-fit--turn" src="{{ $asset('pipes/elbow-up-right.webp') }}" alt="">
+            <span class="adv-run adv-run--fan"></span>
+            @foreach ($services as $service)
+                <img class="adv-fit adv-fit--tee" data-adv-tee="{{ $service['id'] }}" src="{{ $asset('pipes/tee-up.webp') }}" alt="">
+                <span class="adv-run adv-run--branch" data-adv-branch="{{ $service['id'] }}"></span>
+            @endforeach
+            <img class="adv-fit adv-fit--return" src="{{ $asset('pipes/elbow-left-up.webp') }}" alt="">
+            <span class="adv-run adv-run--tail"></span>
+            <span class="adv-run adv-run--final"></span>
+        </div>
+
+        {{-- Decorative: it draws the request travelling, nothing more. Every
+             stage, status and value below is HTML and updates without it. --}}
         <canvas class="adv-canvas" data-adv-canvas aria-hidden="true"></canvas>
 
         <ol class="adv-track" role="list" aria-label="{{ $summary }}">
@@ -50,19 +69,15 @@
                     style="--adv-col: {{ $i + 1 }}"
                     data-adv-node="{{ $stage['id'] }}"
                     data-adv-row="main">
-                    <span class="adv-node-label">{{ $stage['title'] }}</span>
-
-                    <span class="adv-pipe" data-adv-port="{{ $stage['id'] }}">
-                        <span class="adv-pipe-cap" aria-hidden="true"></span>
-                        <span class="adv-pipe-core">
-                            @include('partials.adventure-icon', ['name' => $stage['icon']])
-                        </span>
-                        <span class="adv-pipe-cap" aria-hidden="true"></span>
+                    <span class="adv-machine" style="{{ $sign($stage['art']) }}" data-adv-port="{{ $stage['id'] }}">
+                        <img src="{{ $asset('stations/'.$stage['art']) }}" alt="" loading="lazy" decoding="async">
+                        {{-- The sign on the machine is blank artwork on purpose;
+                             the name is real text sitting on it. --}}
+                        <span class="adv-sign">{{ $stage['title'] }}</span>
                     </span>
-
-                    <button type="button" class="adv-card" aria-describedby="adv-tip-{{ $stage['id'] }}">
-                        <span class="adv-card-detail">{{ $stage['detail'] }}</span>
-                        <span class="adv-card-status" data-adv-status data-adv-states="{{ implode('|', $stage['states']) }}">
+                    <button type="button" class="adv-meta" aria-describedby="adv-tip-{{ $stage['id'] }}">
+                        <span class="adv-meta-detail">{{ $stage['detail'] }}</span>
+                        <span class="adv-meta-status" data-adv-status data-adv-states="{{ implode('|', $stage['states']) }}">
                             Status: <b>{{ $stage['states'][0] }}</b>
                         </span>
                     </button>
@@ -71,23 +86,21 @@
             @endforeach
 
             @foreach ($services as $i => $service)
-                <li class="adv-node adv-node--ok adv-node--service"
+                <li class="adv-node adv-node--ok"
                     style="--adv-col: {{ $i + 1 }}"
                     data-adv-node="{{ $service['id'] }}"
                     data-adv-row="service">
-                    <span class="adv-node-label">{{ $service['title'] }}</span>
-
-                    <span class="adv-pipe adv-pipe--sm" data-adv-port="{{ $service['id'] }}">
-                        <span class="adv-pipe-cap" aria-hidden="true"></span>
-                        <span class="adv-pipe-core">
-                            @include('partials.adventure-icon', ['name' => $service['icon']])
-                        </span>
-                        <span class="adv-pipe-cap" aria-hidden="true"></span>
+                    <span class="adv-machine adv-machine--service" style="{{ $sign($service['art']) }}" data-adv-port="{{ $service['id'] }}">
+                        <img src="{{ $asset('stations/'.$service['art']) }}" alt="" loading="lazy" decoding="async">
+                        <span class="adv-sign adv-sign--service">{{ $service['title'] }}</span>
+                        @if ($service['id'] === 'ai')
+                            <img class="adv-robot" data-adv-robot src="{{ $asset('robot/idle.webp') }}"
+                                 data-adv-robot-wave="{{ $asset('robot/wave.webp') }}" alt="" loading="lazy" decoding="async">
+                        @endif
                     </span>
-
-                    <button type="button" class="adv-card" aria-describedby="adv-tip-{{ $service['id'] }}">
-                        <span class="adv-card-detail">{{ $service['detail'] }}</span>
-                        <span class="adv-card-status" data-adv-status data-adv-states="{{ implode('|', $service['states']) }}">
+                    <button type="button" class="adv-meta" aria-describedby="adv-tip-{{ $service['id'] }}">
+                        <span class="adv-meta-detail">{{ $service['detail'] }}</span>
+                        <span class="adv-meta-status" data-adv-status data-adv-states="{{ implode('|', $service['states']) }}">
                             Status: <b>{{ $service['states'][0] }}</b>
                         </span>
                     </button>
@@ -98,29 +111,40 @@
             <li class="adv-node adv-node--brand adv-node--final"
                 data-adv-node="{{ $destination['id'] }}"
                 data-adv-row="final">
-                <span class="adv-final-rail" data-adv-port="{{ $destination['id'] }}" aria-hidden="true"></span>
-
-                <button type="button" class="adv-card adv-card--final" aria-describedby="adv-tip-{{ $destination['id'] }}">
-                    <span class="adv-final-icon" aria-hidden="true">
-                        @include('partials.adventure-icon', ['name' => $destination['icon']])
-                    </span>
-                    <span class="adv-final-text">
+                <span class="adv-machine adv-machine--final" data-adv-port="{{ $destination['id'] }}">
+                    <img src="{{ $asset('stations/signed-event.webp') }}" alt="" loading="lazy" decoding="async">
+                    <span class="adv-sign adv-sign--final">
                         <strong>{{ $destination['title'] }}</strong>
-                        <span class="adv-card-detail">{{ $destination['detail'] }}</span>
+                        <span>{{ $destination['detail'] }}</span>
                     </span>
-                    <span class="adv-card-status" data-adv-status data-adv-states="{{ implode('|', $destination['states']) }}">
+                </span>
+
+                <span class="adv-portal" data-adv-portal aria-hidden="true">
+                    <img src="{{ $asset('portal/target.webp') }}" alt="">
+                </span>
+
+                <button type="button" class="adv-meta adv-meta--final" aria-describedby="adv-tip-{{ $destination['id'] }}">
+                    <span class="adv-meta-status" data-adv-status data-adv-states="{{ implode('|', $destination['states']) }}">
                         Status: <b>{{ $destination['states'][0] }}</b>
                     </span>
                 </button>
                 <span class="adv-tip" id="adv-tip-{{ $destination['id'] }}" role="tooltip">{{ $destination['tip'] }}</span>
-
-                <span class="adv-portal" data-adv-portal aria-hidden="true"><i></i><i></i><i></i></span>
             </li>
         </ol>
+
+        {{-- Scoreboard overlay. aria-hidden because the numbers carry no
+             architecture meaning — the statuses above are the real content. --}}
+        <div class="adv-hud" aria-hidden="true">
+            <span class="adv-hud-score"><i>Score</i><b data-adv-score>0</b></span>
+            <span class="adv-hud-life">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 20s-7-4.4-7-9.3A4 4 0 0112 8a4 4 0 017 2.7C19 15.6 12 20 12 20z"/></svg>&times;&nbsp;3
+            </span>
+            <span class="adv-hud-clock" data-adv-timer>00:00</span>
+        </div>
     </div>
 
     <div class="adv-foot">
-        <div class="adv-panel adv-panel--legend">
+        <div class="adv-panel">
             <span class="adv-panel-title">Legend</span>
             <ul class="adv-legend">
                 @foreach ($adv['legend'] as $item)
@@ -129,20 +153,18 @@
             </ul>
         </div>
 
-        <div class="adv-panel adv-panel--journey">
+        <div class="adv-panel">
             <span class="adv-panel-title">Request journey</span>
             <p class="adv-journey" data-adv-journey>Connected &rarr; Secured &rarr; Processing &rarr; Delivered</p>
             <div class="adv-controls">
                 <button type="button" class="adv-btn" data-adv-toggle aria-pressed="false">
-                    <span class="adv-btn-play" aria-hidden="true">&#9654;</span>
-                    <span class="adv-btn-pause" aria-hidden="true">&#10073;&#10073;</span>
                     <span data-adv-toggle-text>Pause</span>
                 </button>
                 <button type="button" class="adv-btn" data-adv-replay>Replay</button>
             </div>
         </div>
 
-        <div class="adv-panel adv-panel--progress">
+        <div class="adv-panel">
             <span class="adv-panel-title">Level progress</span>
             <div class="adv-bar" role="progressbar" aria-label="Request journey progress"
                  aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-adv-bar>
@@ -161,19 +183,11 @@
 
 @push('scripts')
     @php
-        // One version for the whole module folder, not just the entry. The
-        // modules propagate this query to each other (see index.js), so a
-        // change to any one of them invalidates all of them together —
-        // otherwise a fresh entry can load a stale sibling and fail at parse
-        // time on an export that did not exist yet.
         $advVersion = collect(glob(public_path('js/api-adventure/*.js')))
             ->map(fn (string $file): int => filemtime($file))
             ->max();
     @endphp
 
-    {{-- A module so the scene can sit behind a dynamic import: Three.js is
-         only fetched once this section scrolls into view, and never at all
-         under reduced motion. --}}
     <script type="module"
             src="{{ asset('js/api-adventure/index.js') }}?v={{ $advVersion }}"></script>
 @endpush

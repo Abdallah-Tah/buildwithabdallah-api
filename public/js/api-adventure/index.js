@@ -66,9 +66,11 @@ function boot(root) {
     function frame(now) {
         raf = requestAnimationFrame(frame);
 
-        // A tab that was backgrounded returns with a huge delta. Clamping keeps
-        // the journey from teleporting to the end on the first frame back.
-        const dt = Math.min((now - last) / 1000, 1 / 20);
+        // Two clamps. A backgrounded tab returns with a huge delta, which would
+        // teleport the journey to the end on the first frame back. And the
+        // rAF timestamp can predate the performance.now() taken in start(),
+        // giving a negative delta that ran the clock to -1:-1.
+        const dt = Math.max(0, Math.min((now - last) / 1000, 1 / 20));
         last = now;
 
         if (paused) return;

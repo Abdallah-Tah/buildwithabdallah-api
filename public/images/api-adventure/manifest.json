@@ -1,0 +1,265 @@
+{
+  "runner": {
+    "idle": {
+      "src": "/images/api-adventure/runner/idle.webp",
+      "frames": 4
+    },
+    "run": {
+      "src": "/images/api-adventure/runner/run.webp",
+      "frames": 8
+    },
+    "jump": {
+      "src": "/images/api-adventure/runner/jump.webp",
+      "frames": 4
+    },
+    "enterPipe": {
+      "src": "/images/api-adventure/runner/enterPipe.webp",
+      "frames": 3
+    },
+    "exitPipe": {
+      "src": "/images/api-adventure/runner/exitPipe.webp",
+      "frames": 2
+    },
+    "success": {
+      "src": "/images/api-adventure/runner/success.webp",
+      "frames": 4
+    }
+  },
+  "frame": 168,
+  "pipes": {
+    "horizontal": {
+      "src": "/images/api-adventure/pipes/horizontal.webp",
+      "w": 520,
+      "h": 133
+    },
+    "vertical": {
+      "src": "/images/api-adventure/pipes/vertical.webp",
+      "w": 130,
+      "h": 560
+    },
+    "elbow-left-down": {
+      "src": "/images/api-adventure/pipes/elbow-left-down.webp",
+      "w": 288,
+      "h": 238
+    },
+    "elbow-down-right": {
+      "src": "/images/api-adventure/pipes/elbow-down-right.webp",
+      "w": 307,
+      "h": 238
+    },
+    "elbow-left-up": {
+      "src": "/images/api-adventure/pipes/elbow-left-up.webp",
+      "w": 250,
+      "h": 242
+    },
+    "elbow-up-right": {
+      "src": "/images/api-adventure/pipes/elbow-up-right.webp",
+      "w": 272,
+      "h": 226
+    },
+    "tee-up": {
+      "src": "/images/api-adventure/pipes/tee-up.webp",
+      "w": 392,
+      "h": 222
+    },
+    "cross": {
+      "src": "/images/api-adventure/pipes/cross.webp",
+      "w": 302,
+      "h": 303
+    },
+    "connector": {
+      "src": "/images/api-adventure/pipes/connector.webp",
+      "w": 147,
+      "h": 151
+    },
+    "cap": {
+      "src": "/images/api-adventure/pipes/cap.webp",
+      "w": 125,
+      "h": 138
+    },
+    "ring": {
+      "src": "/images/api-adventure/pipes/ring.webp",
+      "w": 147,
+      "h": 149
+    },
+    "body": {
+      "src": "/images/api-adventure/pipes/body.webp",
+      "w": 48,
+      "h": 133
+    },
+    "bodyVertical": {
+      "src": "/images/api-adventure/pipes/body-vertical.webp",
+      "w": 130,
+      "h": 48
+    }
+  },
+  "stations": {
+    "products": {
+      "src": "/images/api-adventure/stations/products.webp",
+      "w": 474,
+      "h": 605,
+      "sign": {
+        "top": 0.2612,
+        "width": 0.4808
+      }
+    },
+    "signature": {
+      "src": "/images/api-adventure/stations/signature.webp",
+      "w": 451,
+      "h": 525,
+      "sign": {
+        "top": 0.1486,
+        "width": 0.5034
+      }
+    },
+    "central": {
+      "src": "/images/api-adventure/stations/central.webp",
+      "w": 471,
+      "h": 528,
+      "sign": {
+        "top": 0.1534,
+        "width": 0.4839
+      }
+    },
+    "signed-event": {
+      "src": "/images/api-adventure/stations/signed-event.webp",
+      "w": 900,
+      "h": 166
+    },
+    "ai": {
+      "src": "/images/api-adventure/stations/ai.webp",
+      "w": 455,
+      "h": 566,
+      "sign": {
+        "top": 0.1352,
+        "width": 0.5122
+      }
+    },
+    "whatsapp": {
+      "src": "/images/api-adventure/stations/whatsapp.webp",
+      "w": 451,
+      "h": 566,
+      "sign": {
+        "top": 0.136,
+        "width": 0.5168
+      }
+    },
+    "billing": {
+      "src": "/images/api-adventure/stations/billing.webp",
+      "w": 454,
+      "h": 566,
+      "sign": {
+        "top": 0.136,
+        "width": 0.5152
+      }
+    }
+  },
+  "portal": {
+    "target": {
+      "src": "/images/api-adventure/portal/target.webp",
+      "w": 384,
+      "h": 403
+    }
+  },
+  "robot": {
+    "idle": {
+      "src": "/images/api-adventure/robot/idle.webp",
+      "w": 171,
+      "h": 280
+    },
+    "wave": {
+      "src": "/images/api-adventure/robot/wave.webp",
+      "w": 201,
+      "h": 275
+    }
+  },
+  "effects": {
+    "orb": {
+      "src": "/images/api-adventure/effects/orb.webp",
+      "w": 247,
+      "h": 145
+    },
+    "crystal": {
+      "src": "/images/api-adventure/effects/crystal.webp",
+      "w": 204,
+      "h": 137
+    },
+    "cube": {
+      "src": "/images/api-adventure/effects/cube.webp",
+      "w": 230,
+      "h": 139
+    },
+    "gem-green": {
+      "src": "/images/api-adventure/effects/gem-green.webp",
+      "w": 108,
+      "h": 119
+    },
+    "shield": {
+      "src": "/images/api-adventure/effects/shield.webp",
+      "w": 245,
+      "h": 234
+    },
+    "ripple": {
+      "src": "/images/api-adventure/effects/ripple.webp",
+      "w": 301,
+      "h": 211
+    },
+    "burst": {
+      "src": "/images/api-adventure/effects/burst.webp",
+      "w": 239,
+      "h": 217
+    },
+    "check": {
+      "src": "/images/api-adventure/effects/check.webp",
+      "w": 214,
+      "h": 228
+    },
+    "spark": {
+      "src": "/images/api-adventure/effects/spark.webp",
+      "w": 74,
+      "h": 78
+    },
+    "orbNeutral": {
+      "src": "/images/api-adventure/effects/orb-neutral.webp",
+      "w": 247,
+      "h": 145
+    }
+  },
+  "environment": {
+    "platform-wide": {
+      "src": "/images/api-adventure/environment/platform-wide.webp",
+      "w": 484,
+      "h": 135
+    },
+    "platform": {
+      "src": "/images/api-adventure/environment/platform.webp",
+      "w": 440,
+      "h": 169
+    },
+    "server-rack": {
+      "src": "/images/api-adventure/environment/server-rack.webp",
+      "w": 155,
+      "h": 263
+    },
+    "smoke": {
+      "src": "/images/api-adventure/environment/smoke.webp",
+      "w": 106,
+      "h": 102
+    },
+    "spark-blue": {
+      "src": "/images/api-adventure/environment/spark-blue.webp",
+      "w": 69,
+      "h": 81
+    },
+    "beacon": {
+      "src": "/images/api-adventure/environment/beacon.webp",
+      "w": 126,
+      "h": 115
+    },
+    "flag": {
+      "src": "/images/api-adventure/environment/flag.webp",
+      "w": 122,
+      "h": 155
+    }
+  }
+}

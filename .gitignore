@@ -26,3 +26,6 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Survey contact sheets from scripts/extract-api-adventure-assets.py --survey
+/public/images/api-adventure/_survey*

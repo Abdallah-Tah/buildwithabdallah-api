@@ -2,119 +2,163 @@
    The WebGL layer.
 
    One renderer, one orthographic camera mapped 1:1 to CSS pixels with +y
-   down, so everything here shares the DOM's coordinate system and the route
-   can be built straight from getBoundingClientRect.
+   down, so everything shares the DOM's coordinate system and the route can be
+   built straight from measured element boxes.
 
-   This layer is decorative by contract: scene.js is dynamically imported and
-   every caller treats its absence as normal. It draws the energy in the
-   pipes, the packets, the runner and the arrival — never any text.
+   This layer draws the request moving and the effects around it. It draws no
+   text and no structure: the machines and pipes are DOM images, the labels
+   and statuses are HTML. It is dynamically imported and every caller treats
+   its absence as normal.
    ======================================================================== */
 
 import * as THREE from '../vendor/three.module.min.js';
+import { adventureAssets } from './assets.js';
+import { geometry, SERVICES } from './geometry.js';
+import { buildRoute, TONES } from './pipeline.js';
+import { Packets, Burst } from './particles.js';
+import { Runner, RUNNER_HEIGHT } from './runner.js';
+import { layoutPipework } from './pipework.js';
 
-// Same reasoning as index.js: siblings are versioned with this module's query
-// so the graph cannot go half-stale. Three.js stays a plain static import above
-// so every module shares one instance of it.
-const VERSION = new URL(import.meta.url).search;
+/** A sprite that rides the route, tinted by the stage the request is in. */
+class Orb {
+    constructor(loader, size = 38) {
+        const texture = loader.load(adventureAssets.effects.orbNeutral.src);
+        texture.colorSpace = THREE.SRGBColorSpace;
 
-const [
-    { buildRoute, buildBranch, makePipe, TONES },
-    { Packets, Burst },
-    { Runner },
-] = await Promise.all([
-    import(`./pipeline.js${VERSION}`),
-    import(`./particles.js${VERSION}`),
-    import(`./runner.js${VERSION}`),
-]);
+        this.material = new THREE.MeshBasicMaterial({
+            map: texture,
+            transparent: true,
+            depthWrite: false,
+            side: THREE.DoubleSide,
+            blending: THREE.AdditiveBlending,
+        });
+        this.texture = texture;
+        this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(size * 1.7, size), this.material);
+        this.mesh.renderOrder = 9;
+        this.mesh.scale.y = -1;
+    }
 
-const SERVICES = ['ai', 'whatsapp', 'billing'];
+    update(point, tone, visible, pulse) {
+        this.mesh.visible = visible;
+        this.mesh.position.set(point.x, point.y, 1.5);
+        this.material.color.setHex(tone);
+        const s = 1 + Math.sin(pulse * 7) * 0.06;
+        this.mesh.scale.set(s, -s, 1);
+    }
+
+    dispose() {
+        this.texture.dispose();
+        this.material.dispose();
+        this.mesh.geometry.dispose();
+    }
+}
+
+/** The expanding ring at the portal. */
+class Shockwave {
+    constructor(loader) {
+        const texture = loader.load(adventureAssets.effects.ripple.src);
+        texture.colorSpace = THREE.SRGBColorSpace;
+
+        this.material = new THREE.MeshBasicMaterial({
+            map: texture, transparent: true, depthWrite: false,
+            side: THREE.DoubleSide, blending: THREE.AdditiveBlending, opacity: 0,
+        });
+        this.texture = texture;
+        this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(220, 150), this.material);
+        this.mesh.renderOrder = 11;
+        this.mesh.visible = false;
+        this.life = -1;
+    }
+
+    fire(x, y) {
+        this.mesh.position.set(x, y, 1);
+        this.mesh.visible = true;
+        this.life = 0;
+    }
+
+    update(dt) {
+        if (this.life < 0) return;
+
+        this.life += dt;
+
+        if (this.life > 1.3) {
+            this.life = -1;
+            this.mesh.visible = false;
+
+            return;
+        }
+
+        const t = this.life / 1.3;
+        const scale = 0.4 + t * 1.6;
+        this.mesh.scale.set(scale, -scale, 1);
+        this.material.opacity = 1 - t;
+    }
+
+    reset() { this.life = -1; this.mesh.visible = false; }
+
+    dispose() {
+        this.texture.dispose();
+        this.material.dispose();
+        this.mesh.geometry.dispose();
+    }
+}
 
 export class AdventureScene {
-    /**
-     * @param {HTMLCanvasElement} canvas
-     * @param {import('./stages.js').StageView} view supplies the DOM geometry
-     */
     constructor(canvas, view, order) {
         this.canvas = canvas;
         this.view = view;
         this.order = order;
 
         this.renderer = new THREE.WebGLRenderer({
-            canvas,
-            alpha: true,
-            antialias: true,
-            powerPreference: 'low-power',
+            canvas, alpha: true, antialias: true, powerPreference: 'low-power',
         });
-        // Beyond 2x the cost doubles for a difference nobody can see.
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
         this.scene = new THREE.Scene();
         this.camera = new THREE.OrthographicCamera(0, 1, 0, 1, -100, 100);
 
-        this.runner = new Runner();
+        const loader = new THREE.TextureLoader();
+        this.runner = new Runner(loader);
+        this.orb = new Orb(loader);
         this.packets = new Packets();
         this.burst = new Burst();
+        this.shock = new Shockwave(loader);
 
-        this.scene.add(this.runner.mesh, this.packets.points, this.burst.points);
+        this.scene.add(
+            this.runner.mesh, this.orb.mesh, this.packets.points,
+            this.burst.points, this.shock.mesh,
+        );
 
-        /** @type {THREE.Mesh|null} */
-        this.mainPipe = null;
-        /** @type {Record<string, THREE.Mesh>} */
-        this.branchPipes = {};
         this.route = null;
+        this.geo = null;
         this.burstFired = false;
+        this.clock = 0;
+
+        this.robot = view.root.querySelector('[data-adv-robot]');
+        this.robotIdle = this.robot?.src;
+        this.robotWave = this.robot?.dataset.advRobotWave;
 
         this.build();
     }
 
-    /** (Re)build everything that depends on layout. */
     build() {
-        const { ports, boxes, width, height } = this.view.anchors();
+        const geo = geometry(this.view.anchors());
 
-        // A layout that has not settled yet — retry on the next resize.
-        if (!ports.products || !ports.ai || width < 2) return;
+        if (!geo) return;
 
-        this.disposeGeometry();
-
-        this.width = width;
-        this.height = height;
-        this.renderer.setSize(width, height, false);
-
-        // Screen space: x right, y down, origin top-left.
+        this.geo = geo;
+        this.renderer.setSize(geo.width, geo.height, false);
         this.camera.left = 0;
-        this.camera.right = width;
+        this.camera.right = geo.width;
         this.camera.top = 0;
-        this.camera.bottom = height;
+        this.camera.bottom = geo.height;
         this.camera.updateProjectionMatrix();
 
-        this.route = buildRoute(ports, { width, height }, boxes, this.order);
-
-        // Each stage's window becomes a coloured band, so the pipe keeps a
-        // record of the journey: blue where it was connected, amber through
-        // the gate, violet through the API, green out to the providers.
-        const bands = Object.entries(this.route.windows)
-            .sort((a, b) => a[1].to - b[1].to)
-            .map(([id, w]) => ({ to: w.to, tone: TONES[id] ?? TONES.products }));
-
-        this.mainPipe = makePipe(this.route.curve, bands, { radius: 3.4 });
-        this.scene.add(this.mainPipe);
-
-        // The stacked route runs through the providers directly, so there is
-        // nothing to branch off.
-        for (const id of this.route.stacked ? [] : SERVICES) {
-            if (!ports[id]) continue;
-
-            const pipe = makePipe(
-                buildBranch(ports[id], this.route.fanY),
-                [{ to: 1, tone: TONES[id] }],
-                { radius: 2.8, segments: 40 },
-            );
-            this.branchPipes[id] = pipe;
-            this.scene.add(pipe);
-        }
+        // The artwork and the route come from the same geometry, in that order.
+        layoutPipework(this.view.root, geo);
+        this.route = buildRoute(geo, this.order);
     }
 
-    /** @param {string[]} [order] the provider order for the new layout */
     resize(order) {
         if (order) this.order = order;
         this.build();
@@ -123,103 +167,99 @@ export class AdventureScene {
     reset() {
         this.burstFired = false;
         this.burst.reset();
+        this.shock.reset();
+        this.setRobot(false);
     }
 
-    /**
-     * @param {import('./timeline.js').Timeline} timeline
-     * @param {number} dt
-     */
+    setRobot(waving) {
+        if (!this.robot || !this.robotWave) return;
+
+        const src = waving ? this.robotWave : this.robotIdle;
+
+        if (!this.robot.src.endsWith(src.split('/').pop())) {
+            this.robot.src = src;
+        }
+    }
+
     render(timeline, dt) {
         if (!this.route) {
             this.build();
             if (!this.route) return;
         }
 
+        this.clock += dt;
+
         const beat = timeline.current;
         const window_ = this.route.windows[beat.id];
         const { local, state } = timeline.stageAt(beat.id);
-
-        // Where the request is along the whole route, in curve space.
-        const u = window_
+        const head = Math.max(0, Math.min(1, window_
             ? window_.from + (window_.to - window_.from) * (state === 'done' ? 1 : local)
-            : timeline.progress;
-        const head = Math.max(0, Math.min(1, u));
+            : timeline.progress));
 
         const point = this.route.curve.getPointAt(head);
         const tone = TONES[beat.id] ?? TONES.products;
 
-        // The main pipe lights behind the head, in the colour of the stage the
-        // request is currently in — the dot turning amber at the gate and
-        // violet inside the API is the same idea the CSS version had.
-        this.mainPipe.material.uniforms.uHead.value = head;
+        // Classic pipe travel: the runner is only out in the open while it is
+        // crossing a machine. In between, the request is the glowing packet
+        // inside the pipe, and the runner is not drawn at all.
+        const onMachine = this.overMachine(point);
 
+        this.runner.visible = onMachine && !timeline.complete;
+        this.runner.setState(this.runnerState(timeline, beat, local, onMachine));
+        this.runner.update(point, dt);
+
+        this.orb.update(point, tone, !onMachine || timeline.complete, this.clock);
         this.packets.setTone(tone);
         this.packets.follow(this.route.curve, head);
-
-        // Each branch fills only while its own service beat is running, which
-        // is what staggers the fan-out.
-        for (const id of SERVICES) {
-            const pipe = this.branchPipes[id];
-            if (!pipe) continue;
-
-            const s = timeline.stageAt(id);
-            pipe.material.uniforms.uHead.value = s.state === 'done' ? 1 : s.state === 'active' ? s.local : 0;
-        }
-
-        this.runner.update(point, dt, this.runnerState(timeline, beat, local));
+        this.packets.visible = !onMachine;
 
         if (timeline.complete && !this.burstFired) {
             this.burstFired = true;
             this.burst.fire(point.x, point.y);
+            this.shock.fire(point.x, point.y);
         }
 
-        if (!timeline.complete) {
-            this.burstFired = false;
-        }
+        if (!timeline.complete) this.burstFired = false;
+
+        // The robot acknowledges its own delivery, then settles.
+        this.setRobot(timeline.stageAt('ai').state === 'active');
 
         this.burst.update(dt);
+        this.shock.update(dt);
         this.renderer.render(this.scene, this.camera);
     }
 
-    /** The pose, derived from where in the route the request is. */
-    runnerState(timeline, beat, local) {
-        if (timeline.complete) return 'success';
+    /** True when the request is over a machine rather than inside a pipe. */
+    overMachine(point) {
+        const ports = this.geo?.ports ?? {};
 
-        // Crossing a pipe body is a tuck; the gaps between them are a run, and
-        // the elbow down into the fan lane reads as a jump.
-        if (beat.id === 'signature' && local > 0.25 && local < 0.75) return 'pipe';
-        if (beat.id === 'central-api' && local > 0.7) return 'jump';
-        if (SERVICES.includes(beat.id)) return 'pipe';
-        // The rail runs behind the signed-event card, so the request is
-        // genuinely inside something here: tuck until it comes out the far
-        // side heading for the portal.
-        if (beat.id === 'webhook' && local > 0.3 && local < 0.72) return 'pipe';
+        for (const port of Object.values(ports)) {
+            if (typeof port.w !== 'number') continue;
+
+            if (point.x > port.x + port.w * 0.12 && point.x < port.right - port.w * 0.12
+                && point.y > port.y - RUNNER_HEIGHT && point.y < port.bottom) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    runnerState(timeline, beat, local, onMachine) {
+        if (timeline.complete) return 'success';
+        if (!onMachine) return 'enterPipe';
+        if (beat.id === 'signature' && local > 0.3 && local < 0.7) return 'idle';
+        if (SERVICES.includes(beat.id)) return 'idle';
 
         return 'run';
     }
 
-    disposeGeometry() {
-        if (this.mainPipe) {
-            this.scene.remove(this.mainPipe);
-            this.mainPipe.geometry.dispose();
-            this.mainPipe.material.dispose();
-            this.mainPipe = null;
-        }
-
-        for (const [id, pipe] of Object.entries(this.branchPipes)) {
-            this.scene.remove(pipe);
-            pipe.geometry.dispose();
-            pipe.material.dispose();
-            delete this.branchPipes[id];
-        }
-    }
-
-    /** Everything allocated here is released; the canvas is left in the DOM. */
     dispose() {
-        this.disposeGeometry();
         this.runner.dispose();
+        this.orb.dispose();
         this.packets.dispose();
         this.burst.dispose();
+        this.shock.dispose();
         this.scene.clear();
         this.renderer.dispose();
     }

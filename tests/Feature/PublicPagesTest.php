@@ -48,7 +48,43 @@ it('serves the public assets the layout references', function (string $path): vo
     'js/api-adventure/particles.js',
     'js/vendor/three.module.min.js',
     'js/vendor/three.core.min.js',
+    'js/api-adventure/assets.js',
+    'js/api-adventure/geometry.js',
+    'js/api-adventure/pipework.js',
 ]);
+
+it('ships every sprite the asset manifest promises', function (): void {
+    // The manifest is generated from the sprite sheets. If an entry survives a
+    // re-run but its file does not, the page renders an empty machine and the
+    // only symptom is a gap where the artwork should be.
+    $manifest = json_decode(file_get_contents(public_path('images/api-adventure/manifest.json')), true);
+
+    foreach ($manifest as $group => $entries) {
+        if (! is_array($entries)) {
+            continue;
+        }
+
+        foreach ($entries as $key => $entry) {
+            expect(public_path(ltrim($entry['src'], '/')))
+                ->toBeReadableFile("{$group}.{$key} is in the manifest but not on disk");
+        }
+    }
+});
+
+it('knows where the blank sign board sits on every station', function (): void {
+    // The station artwork ships with empty boards so the labels can be real
+    // text. Without a measured position the label lands somewhere arbitrary on
+    // the machine, which is how it looked before the measurement existed.
+    $manifest = json_decode(file_get_contents(public_path('images/api-adventure/manifest.json')), true);
+
+    foreach (config('api_adventure.stages') + config('api_adventure.services') as $stage) {
+        $sign = $manifest['stations'][basename($stage['art'], '.webp')]['sign'] ?? null;
+
+        expect($sign)->toBeArray("no sign box measured for {$stage['id']}")
+            ->and($sign['top'])->toBeGreaterThan(0.0)->toBeLessThan(0.6)
+            ->and($sign['width'])->toBeGreaterThan(0.2);
+    }
+});
 
 /*
 |--------------------------------------------------------------------------
