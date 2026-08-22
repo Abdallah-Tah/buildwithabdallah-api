@@ -11,9 +11,21 @@
    ======================================================================== */
 
 import * as THREE from '../vendor/three.module.min.js';
-import { buildRoute, buildBranch, makePipe, TONES } from './pipeline.js';
-import { Packets, Burst } from './particles.js';
-import { Runner } from './runner.js';
+
+// Same reasoning as index.js: siblings are versioned with this module's query
+// so the graph cannot go half-stale. Three.js stays a plain static import above
+// so every module shares one instance of it.
+const VERSION = new URL(import.meta.url).search;
+
+const [
+    { buildRoute, buildBranch, makePipe, TONES },
+    { Packets, Burst },
+    { Runner },
+] = await Promise.all([
+    import(`./pipeline.js${VERSION}`),
+    import(`./particles.js${VERSION}`),
+    import(`./runner.js${VERSION}`),
+]);
 
 const SERVICES = ['ai', 'whatsapp', 'billing'];
 

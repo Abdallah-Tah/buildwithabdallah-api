@@ -7,8 +7,25 @@
    who asked for reduced motion, never pays for Three.js at all.
    ======================================================================== */
 
-import { Timeline } from './timeline.js';
-import { StageView, serviceOrder } from './stages.js';
+/*
+ * Cache busting for a module graph without a bundler.
+ *
+ * The page loads this file as index.js?v=N. A static `import './stages.js'`
+ * would resolve without that query, so the browser is free to serve a stale
+ * copy of a sibling while honouring the new entry — which fails at parse time
+ * the moment a sibling grows an export. import.meta.url carries the query, so
+ * every app module is loaded through it and the whole graph moves together.
+ *
+ * The vendored Three.js is deliberately excluded: it is imported statically and
+ * unversioned by the modules below, which keeps it to a single instance. It is
+ * pinned by content, so a change there means a new file, not a new query.
+ */
+const VERSION = new URL(import.meta.url).search;
+
+const [{ Timeline }, { StageView, serviceOrder }] = await Promise.all([
+    import(`./timeline.js${VERSION}`),
+    import(`./stages.js${VERSION}`),
+]);
 
 const root = document.querySelector('[data-adventure]');
 
@@ -135,7 +152,7 @@ function boot(root) {
         if (!canvas || !supportsWebgl()) return;
 
         try {
-            const { AdventureScene } = await import('./scene.js');
+            const { AdventureScene } = await import(`./scene.js${VERSION}`);
             scene = new AdventureScene(canvas, view, order);
             root.dataset.advMode = 'webgl';
         } catch (error) {

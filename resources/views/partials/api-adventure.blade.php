@@ -160,9 +160,20 @@
 </div>
 
 @push('scripts')
-    {{-- Loaded as a module so the scene can be code-split behind a dynamic
-         import: Three.js is only fetched once this section scrolls into view
-         and only when the visitor has not asked for reduced motion. --}}
+    @php
+        // One version for the whole module folder, not just the entry. The
+        // modules propagate this query to each other (see index.js), so a
+        // change to any one of them invalidates all of them together —
+        // otherwise a fresh entry can load a stale sibling and fail at parse
+        // time on an export that did not exist yet.
+        $advVersion = collect(glob(public_path('js/api-adventure/*.js')))
+            ->map(fn (string $file): int => filemtime($file))
+            ->max();
+    @endphp
+
+    {{-- A module so the scene can sit behind a dynamic import: Three.js is
+         only fetched once this section scrolls into view, and never at all
+         under reduced motion. --}}
     <script type="module"
-            src="{{ asset('js/api-adventure/index.js') }}?v={{ filemtime(public_path('js/api-adventure/index.js')) }}"></script>
+            src="{{ asset('js/api-adventure/index.js') }}?v={{ $advVersion }}"></script>
 @endpush
