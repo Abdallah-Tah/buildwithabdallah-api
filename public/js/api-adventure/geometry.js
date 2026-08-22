@@ -36,6 +36,11 @@ export function geometry(anchors) {
     const mainY = barrel(ports.products);
     const serviceY = barrel(ports.ai);
     const serviceTop = Math.min(...SERVICES.map((id) => boxes[id]?.top ?? ports[id].y));
+    // The whole node, not the machine: the detail and status sit below the
+    // artwork and the lane has to clear them.
+    const mainBottom = Math.max(
+        ...['products', 'signature', 'central-api'].map((id) => boxes[id]?.bottom ?? ports[id].bottom),
+    );
 
     return {
         stacked: false,
@@ -45,7 +50,7 @@ export function geometry(anchors) {
         mainY,
         serviceY,
         // The lane sits in the gap above the service machines.
-        fanY: Math.max(ports['central-api'].bottom - 8, serviceTop - 46),
+        fanY: Math.max(mainBottom + 26, serviceTop - 40),
         railY: ports.webhook.y + ports.webhook.h * 0.5,
         // Turn column just inside the right edge, and the return leg just
         // inside the left.

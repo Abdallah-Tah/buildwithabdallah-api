@@ -15,8 +15,12 @@ import { adventureAssets } from './assets.js';
 
 const FRAME_RATE = 13;
 
-/** Height in stage pixels. Visible, but not competing with the machines. */
-export const RUNNER_HEIGHT = 74;
+/**
+ * Plane height in stage pixels. The character occupies 150 of the 168px frame,
+ * so the figure itself reads about 86px — large enough to find immediately
+ * without competing with the machines it runs across.
+ */
+export const RUNNER_HEIGHT = 96;
 
 export class Runner {
     constructor(loader) {
