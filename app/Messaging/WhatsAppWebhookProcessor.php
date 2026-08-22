@@ -65,7 +65,12 @@ class WhatsAppWebhookProcessor
                     'last_seen_at' => $now,
                 ],
             );
-            $contact->update(['last_seen_at' => $now]);
+            // The display name is only seeded on create, so a contact first seen
+            // through an outbound send keeps a null name forever otherwise.
+            $contact->update(array_filter([
+                'last_seen_at' => $now,
+                'display_name_encrypted' => is_string($displayName) ? $displayName : null,
+            ]));
 
             $conversation = WhatsAppConversation::query()
                 ->whereBelongsTo($contact, 'contact')
@@ -126,6 +131,18 @@ class WhatsAppWebhookProcessor
                     'payload' => $this->eventPayload($message->fresh(['conversation'])),
                 ]);
                 DispatchApplicationEvent::dispatch($delivery)->onQueue('application-events');
+            }
+
+            if (! $message->connected_application_id) {
+                // Stage one of attribution failed: no menu pick, and no
+                // unambiguous history to fall back on. The message is kept, but
+                // no application will ever see it, so it needs to be visible
+                // here rather than only discoverable by reading the table.
+                Log::warning('whatsapp.message.unattributed', [
+                    'internal_message_id' => $message->id,
+                    'conversation_id' => $conversation->id,
+                    'contact_id' => $contact->id,
+                ]);
             }
 
             Log::info('whatsapp.message.stored', ['internal_message_id' => $message->id, 'conversation_id' => $conversation->id]);
@@ -253,6 +270,11 @@ class WhatsAppWebhookProcessor
                 'message_type' => $message->message_type,
                 'text' => $message->text_body_encrypted,
                 'reply_to_message_id' => $message->reply_to_meta_message_id,
+                // Without these an application receives a photo or a PDF it has
+                // no way to fetch, and a sender it can only identify by number.
+                'profile_name' => $message->contact?->display_name_encrypted,
+                'media_id' => $message->media_id,
+                'media' => Arr::only($message->request_payload ?? [], ['mime_type', 'filename', 'caption']),
             ],
         ];
 

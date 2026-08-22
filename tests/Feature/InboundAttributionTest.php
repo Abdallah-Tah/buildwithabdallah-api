@@ -7,6 +7,7 @@ use App\Models\ConnectedApplication;
 use App\Models\WhatsAppContact;
 use App\Models\WhatsAppMessage;
 use App\Models\WhatsAppWebhookEvent;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 
 // A contact who replies to a product's message has never picked anything from
@@ -164,4 +165,50 @@ test('a menu command is not immediately re-attributed by the fallback', function
 
     expect($conversation->connected_application_id)->toBeNull()
         ->and($conversation->state->value)->toBe('awaiting_product_selection');
+});
+
+test('the relayed payload carries what an application needs to identify sender and media', function () {
+    Queue::fake();
+    $application = ConnectedApplication::factory()->create([
+        'slug' => 'kirada',
+        'metadata' => ['include_phone_number' => true],
+    ]);
+    outboundFrom($application, knownContact());
+
+    $event = replyEvent('see attached', 'wamid.media');
+    $payload = $event->raw_payload;
+    $payload['entry'][0]['changes'][0]['value']['messages'][0] = [
+        'from' => '12074097887',
+        'id' => 'wamid.media',
+        'timestamp' => '1785450000',
+        'type' => 'image',
+        'image' => ['id' => 'media-abc', 'mime_type' => 'image/jpeg', 'caption' => 'the meter'],
+    ];
+    $event->update(['raw_payload' => $payload]);
+
+    app(WhatsAppWebhookProcessor::class)->process($event);
+
+    $data = data_get(
+        ApplicationEventDelivery::query()->where('event_type', 'whatsapp.message.received')->firstOrFail()->payload,
+        'data',
+    );
+
+    // Without media_id the application receives a photo it cannot fetch, and
+    // without profile_name a sender it can only identify by number.
+    expect($data['media_id'])->toBe('media-abc')
+        ->and($data['profile_name'])->toBe('Tenant')
+        ->and($data['media']['mime_type'])->toBe('image/jpeg')
+        ->and($data['media']['caption'])->toBe('the meter')
+        ->and($data['phone_number'])->toBe('12074097887');
+});
+
+test('an unattributed inbound message is logged rather than silently shelved', function () {
+    Queue::fake();
+    Log::spy();
+
+    app(WhatsAppWebhookProcessor::class)->process(replyEvent('who is this', 'wamid.quiet'));
+
+    Log::shouldHaveReceived('warning')
+        ->with('whatsapp.message.unattributed', Mockery::type('array'))
+        ->once();
 });
