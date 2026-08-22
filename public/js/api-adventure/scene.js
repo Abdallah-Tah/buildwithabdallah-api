@@ -202,7 +202,11 @@ export class AdventureScene {
         // Classic pipe travel: the runner is only out in the open while it is
         // crossing a machine. In between, the request is the glowing packet
         // inside the pipe, and the runner is not drawn at all.
-        const onMachine = this.overMachine(point);
+        // The final rail is floor, not pipe: the request has come back out as
+        // a signed event and runs it to the portal. Without this the runner
+        // handed off to the orb the moment it cleared the event bar, and the
+        // arrival — the part worth watching — had no character in it.
+        const onMachine = beat.id === 'webhook' || this.overMachine(point);
 
         this.runner.visible = onMachine && !timeline.complete;
         this.runner.setState(this.runnerState(timeline, beat, local, onMachine));
@@ -248,6 +252,8 @@ export class AdventureScene {
     runnerState(timeline, beat, local, onMachine) {
         if (timeline.complete) return 'success';
         if (!onMachine) return 'enterPipe';
+        // A jump just before the portal, so the arrival reads as one.
+        if (beat.id === 'webhook' && local > 0.86) return 'jump';
         if (beat.id === 'signature' && local > 0.3 && local < 0.7) return 'idle';
         if (SERVICES.includes(beat.id)) return 'idle';
 

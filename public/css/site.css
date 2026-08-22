@@ -555,7 +555,7 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
     --adv-service-w: 232px;
     --adv-pipe-h: 40px;
     --adv-gap: 10px;
-    --adv-fan-gap: 78px;
+    --adv-fan-gap: 70px;
 
     --adv-ease: cubic-bezier(.32, .72, 0, 1);
 
@@ -648,11 +648,19 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
 }
 
 /* --------------------------------------------------------------- scenery */
-.adv-scenery { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
-.adv-scenery img { position: absolute; opacity: .26; filter: saturate(.7); }
-.adv-scenery-rack--a { left: 2%;  top: 40%; width: 46px; }
-.adv-scenery-rack--b { right: 3%; top: 43%; width: 38px; opacity: .18; }
-.adv-scenery-beacon  { left: 46%; bottom: 20%; width: 26px; opacity: .3; }
+/* Three depths. None of it is interactive, none of it carries meaning, and
+   all of it stays under 30% opacity so the pipeline reads first. */
+.adv-scenery { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.adv-prop { position: absolute; filter: saturate(.55); }
+
+.adv-prop--rack-a { left: 1.5%;  top: 46%; width: 52px; opacity: .3; }
+.adv-prop--rack-b { right: 2%;   top: 41%; width: 44px; opacity: .22; }
+.adv-prop--rack-c { left: 33%;   bottom: 20%; width: 34px; opacity: .14; }
+.adv-prop--deck-a { right: 6%;   bottom: 12%; width: 190px; opacity: .12; }
+.adv-prop--deck-b { left: 4%;    top: 34%; width: 130px; opacity: .1; }
+.adv-prop--beacon-a { left: 22%; bottom: 24%; width: 22px; opacity: .34; animation: advBlink 3.6s var(--adv-ease) infinite; }
+.adv-prop--beacon-b { right: 26%; top: 43%; width: 18px; opacity: .26; animation: advBlink 4.4s var(--adv-ease) infinite .8s; }
+.adv-prop--steam { left: 12%; bottom: 26%; width: 60px; opacity: .1; animation: advSteam 9s linear infinite; }
 
 /* ------------------------------------------------------------- pipework */
 /* Long runs tile a repeatable body between fittings. Nothing here is
@@ -694,7 +702,7 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
     flex-direction: column;
     align-items: center;
     gap: 5px;
-    padding-bottom: 12px;
+    padding-bottom: 6px;
 }
 /* A fixed three-row grid, not a flex column: the capsules must share one
    baseline whatever the detail text below them does. When they did not, they
@@ -727,15 +735,21 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
     position: relative;
     display: block;
     width: min(100%, var(--adv-machine-w));
+    transition: transform .55s var(--adv-ease);
+}
+/* Only the artwork dims. The label and status sit inside this element and
+   have to stay legible while the machine is still waiting its turn. */
+.adv-machine > img:not(.adv-robot) {
     filter: grayscale(.55) brightness(.62);
-    transition: filter .55s var(--adv-ease), transform .55s var(--adv-ease);
+    transition: filter .55s var(--adv-ease);
 }
 /* Direct child only: the robot is also an img inside the machine and must
    keep its own size. */
 .adv-machine > img:not(.adv-robot) { display: block; width: 100%; height: auto; }
 
-.adv-node.is-active .adv-machine { filter: none; transform: translateY(-2px); }
-.adv-node.is-done .adv-machine   { filter: brightness(.92); }
+.adv-node.is-active .adv-machine { transform: translateY(-2px); }
+.adv-node.is-active .adv-machine > img:not(.adv-robot) { filter: none; }
+.adv-node.is-done .adv-machine > img:not(.adv-robot) { filter: brightness(.92); }
 
 /* The name, sitting on the machine's blank sign board. */
 /* Anchored to where the blank board actually is in the artwork, measured as a
@@ -865,7 +879,7 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
     align-items: center;
     justify-content: center;
     gap: 10px;
-    margin-top: 14px;
+    margin-top: 2px;
 }
 .adv-machine--final { width: min(100%, 660px); flex: 0 1 660px; }
 .adv-sign--final {
@@ -904,17 +918,17 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
 .adv-foot {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 9px;
-    padding: 10px 14px 0;
+    gap: 8px;
+    padding: 8px 14px 0;
 }
-.adv-panel { padding: 9px 12px; border: 1px solid var(--adv-line); border-radius: var(--radius-md); background: var(--adv-panel); }
+.adv-panel { padding: 8px 11px; border: 1px solid var(--adv-line); border-radius: var(--radius-md); background: var(--adv-panel); }
 .adv-panel-title {
-    display: block; margin-bottom: 8px;
-    font: 600 10px/1 var(--font-mono);
+    display: block; margin-bottom: 6px;
+    font: 600 9.5px/1 var(--font-mono);
     letter-spacing: .1em; text-transform: uppercase; color: var(--adv-faint);
 }
 .adv-legend {
-    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 10px;
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 10px;
     margin: 0; padding: 0; list-style: none;
     font: 500 11px/1 var(--font-sans); color: var(--adv-dim);
 }
@@ -925,12 +939,12 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
 .adv-dot--process { background: var(--adv-process); }
 .adv-dot--ok { background: var(--adv-ok); }
 
-.adv-journey { margin: 0 0 9px; font: 500 11px/1.5 var(--font-mono); color: var(--adv-dim); }
+.adv-journey { margin: 0 0 7px; font: 500 10.5px/1.45 var(--font-mono); color: var(--adv-dim); }
 .adv-journey b { color: var(--adv-ink); font-weight: 600; }
 
 .adv-controls { display: flex; gap: 6px; }
 .adv-btn {
-    padding: 6px 11px;
+    padding: 5px 10px;
     border: 1px solid var(--adv-line-h);
     border-radius: var(--radius-sm);
     background: rgba(23, 33, 56, .7);
@@ -946,12 +960,12 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
 .adv-bar { height: 7px; border-radius: 999px; background: rgba(148, 163, 184, .16); overflow: hidden; }
 .adv-bar i { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--adv-brand); transition: width .3s linear, background .5s var(--adv-ease); }
 .adv-bar.is-done i { background: var(--adv-ok); }
-.adv-progress-value { display: block; margin-top: 7px; font: 600 11px/1 var(--font-mono); color: var(--adv-dim); }
+.adv-progress-value { display: block; margin-top: 5px; font: 600 11px/1 var(--font-mono); color: var(--adv-dim); }
 
 .adv-note {
     display: flex; align-items: center; gap: 9px;
-    margin: 10px 0 0;
-    padding: 10px 16px;
+    margin: 8px 0 0;
+    padding: 9px 16px;
     border-top: 1px solid var(--adv-line);
     background: rgba(8, 12, 22, .6);
     font: 500 11px/1.5 var(--font-mono);
@@ -967,6 +981,10 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
 @keyframes advPortal     { 0% { transform: scale(1); } 55% { transform: scale(1.08); } 100% { transform: scale(1); } }
 @keyframes advPortalGlow { to { transform: rotate(360deg); } }
 @keyframes advCaret     { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+@keyframes advBlink     { 0%, 82%, 100% { opacity: .16; } 88% { opacity: .42; } }
+@keyframes advSteam     { 0% { transform: translateY(6px) scale(.9); opacity: 0; }
+                          35% { opacity: .12; }
+                          100% { transform: translateY(-42px) scale(1.35); opacity: 0; } }
 
 /* ========================================================================
    8. Stats band

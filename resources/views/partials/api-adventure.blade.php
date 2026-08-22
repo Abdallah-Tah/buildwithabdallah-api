@@ -37,9 +37,17 @@
         {{-- Background depth. Decorative and deliberately sparse: the
              architecture has to stay the thing you read first. --}}
         <div class="adv-scenery" aria-hidden="true">
-            <img class="adv-scenery-rack adv-scenery-rack--a" src="{{ $asset('environment/server-rack.webp') }}" alt="" loading="lazy" decoding="async">
-            <img class="adv-scenery-rack adv-scenery-rack--b" src="{{ $asset('environment/server-rack.webp') }}" alt="" loading="lazy" decoding="async">
-            <img class="adv-scenery-beacon" src="{{ $asset('environment/beacon.webp') }}" alt="" loading="lazy" decoding="async">
+            {{-- Midground: machinery that reads as a room the pipeline runs
+                 through. Deliberately low contrast — the architecture has to
+                 stay the thing you read first. --}}
+            <img class="adv-prop adv-prop--rack-a" src="{{ $asset('environment/server-rack.webp') }}" alt="" loading="lazy" decoding="async">
+            <img class="adv-prop adv-prop--rack-b" src="{{ $asset('environment/server-rack.webp') }}" alt="" loading="lazy" decoding="async">
+            <img class="adv-prop adv-prop--rack-c" src="{{ $asset('environment/server-rack.webp') }}" alt="" loading="lazy" decoding="async">
+            <img class="adv-prop adv-prop--deck-a" src="{{ $asset('environment/platform-wide.webp') }}" alt="" loading="lazy" decoding="async">
+            <img class="adv-prop adv-prop--deck-b" src="{{ $asset('environment/platform.webp') }}" alt="" loading="lazy" decoding="async">
+            <img class="adv-prop adv-prop--beacon-a" src="{{ $asset('environment/beacon.webp') }}" alt="" loading="lazy" decoding="async">
+            <img class="adv-prop adv-prop--beacon-b" src="{{ $asset('environment/beacon.webp') }}" alt="" loading="lazy" decoding="async">
+            <img class="adv-prop adv-prop--steam" src="{{ $asset('environment/smoke.webp') }}" alt="" loading="lazy" decoding="async">
         </div>
 
         {{-- Pipework. Real artwork, tiled rather than stretched: every long run
