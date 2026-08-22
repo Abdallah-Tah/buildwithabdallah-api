@@ -512,248 +512,503 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
     border-top: 1px solid var(--line);
 }
 
-@media (min-width: 1024px) {
-    .hero-grid { grid-template-columns: minmax(0, 1.02fr) minmax(0, .98fr); gap: 72px; }
-}
+/* The pipeline moved out of the hero into its own full-width section, so the
+   hero is a single measure now. Capped so the headline still breaks at a
+   thought boundary rather than running the full 1240px shell. */
+.hero-solo { display: grid; gap: 32px; max-width: 780px; }
 
 /* ========================================================================
-   7. Flow diagram — the animated pipeline
-      Nodes light in sequence and a pulse walks each connector, tracing the
-      real request path on a loop. Everything here is disabled under reduced
-      motion.
+   7. API distribution adventure — the request journey, played as a level
+
+   The frame keeps its own dark palette in both site themes. It reads as an
+   embedded screen, like the code blocks do, so it does not have to be
+   redrawn twice and never fights the page background.
+
+   Layout is CSS grid and the labels are real text. The <canvas> on top is
+   decorative: it draws the energy moving through the pipes and the runner,
+   and the section is complete and correct with it absent.
    ======================================================================== */
-.flow {
-    padding: 20px;
-    border: 1px solid var(--line);
+.adv {
+    --adv-bg: #070b16;
+    --adv-panel: rgba(15, 23, 42, .66);
+    --adv-panel-solid: #0d1526;
+    --adv-line: rgba(148, 163, 184, .16);
+    --adv-line-h: rgba(148, 163, 184, .32);
+    --adv-ink: #e8eefc;
+    --adv-dim: #98a7c0;
+    --adv-faint: #64748b;
+
+    --adv-brand: #3d7fff;
+    --adv-secure: #f5a524;
+    --adv-process: #a855f7;
+    --adv-ok: #34d399;
+
+    /* Set per node by --adv-tone so one rule can light any pipe. */
+    --adv-tone: var(--adv-brand);
+
+    --adv-ease: cubic-bezier(.32, .72, 0, 1);
+
+    position: relative;
+    isolation: isolate;
+    margin-top: 40px;
+    border: 1px solid var(--adv-line);
     border-radius: var(--radius-lg);
-    background: var(--surface);
+    background: var(--adv-bg);
+    color: var(--adv-ink);
+    overflow: hidden;
     box-shadow: var(--shadow-pop);
 }
 
-.flow-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 2px 4px 18px;
-    border-bottom: 1px solid var(--line);
-    margin-bottom: 18px;
-    font: 500 11px/1 var(--font-mono);
-    color: var(--mute);
+/* Engineering grid + a vignette so the corners fall away from the action. */
+.adv::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background:
+        radial-gradient(120% 80% at 50% 0%, rgba(61, 127, 255, .10), transparent 60%),
+        radial-gradient(90% 70% at 50% 100%, rgba(168, 85, 247, .07), transparent 62%),
+        repeating-linear-gradient(to right, rgba(148, 163, 184, .05) 0 1px, transparent 1px 48px),
+        repeating-linear-gradient(to bottom, rgba(148, 163, 184, .05) 0 1px, transparent 1px 48px);
+    pointer-events: none;
 }
-.flow-lights { display: flex; gap: 6px; }
-.flow-lights i { width: 9px; height: 9px; border-radius: 50%; background: var(--line-h); }
-.flow-lights i:nth-child(2) { background: var(--brand-700); }
-.flow-lights i:nth-child(3) { background: var(--brand-500); }
 
-.node {
+.adv > * { position: relative; z-index: 1; }
+
+.adv-node--brand   { --adv-tone: var(--adv-brand); }
+.adv-node--secure  { --adv-tone: var(--adv-secure); }
+.adv-node--process { --adv-tone: var(--adv-process); }
+.adv-node--ok      { --adv-tone: var(--adv-ok); }
+
+/* ---------------------------------------------------------------- chrome */
+.adv-head {
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 14px;
-    border: 1px solid var(--line);
-    border-radius: var(--radius-md);
-    background: var(--panel);
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--adv-line);
+    background: rgba(8, 12, 22, .7);
 }
-/* The badge shares --brand-soft with a lit node, so it needs its own outline
-   to stay readable as the trace passes through. */
-.node-icon {
-    flex: none;
-    width: 38px;
-    height: 38px;
-    display: grid;
-    place-items: center;
-    border: 1px solid var(--brand-soft-line);
-    border-radius: var(--radius-sm);
-    background: var(--brand-soft);
-    color: var(--brand-read);
+.adv-lights { display: flex; gap: 6px; }
+.adv-lights i {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #2a3550;
+    animation: advIdleLight 4.2s var(--adv-ease) infinite;
 }
-.node-icon svg { width: 18px; height: 18px; }
-/* Scoped to .node-body: a bare `.node span` would outrank .node-icon and
-   flatten the badge. */
-.node-body { flex: 1; min-width: 0; }
-.node-body strong {
-    display: block;
-    font-size: 14px;
-    font-weight: 600;
+.adv-lights i:nth-child(2) { background: #1e4fb8; animation-delay: .5s; }
+.adv-lights i:nth-child(3) { background: var(--adv-brand); animation-delay: 1s; }
+
+.adv-name {
+    font: 600 14px/1 var(--font-display);
     letter-spacing: -.01em;
-    color: var(--ink);
 }
-.node-body span {
+.adv-host {
+    margin-left: auto;
+    font: 500 11px/1 var(--font-mono);
+    color: var(--adv-faint);
+}
+
+/* ------------------------------------------------------------------- hud */
+.adv-hud {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px 0;
+}
+.adv-hud-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid var(--adv-line);
+    border-radius: var(--radius-md);
+    background: var(--adv-panel);
+    font: 500 12px/1 var(--font-mono);
+    color: var(--adv-dim);
+}
+.adv-hud-cell svg { width: 14px; height: 14px; }
+.adv-hud-cell--score { flex-direction: column; align-items: flex-start; gap: 4px; justify-self: start; }
+.adv-hud-cell--score span { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--adv-faint); }
+.adv-hud-cell--score strong { font: 600 18px/1 var(--font-mono); color: var(--adv-ok); }
+.adv-hud-cell--life { justify-self: center; color: #fb7185; }
+.adv-hud-cell--life svg { animation: advHeart 2.4s var(--adv-ease) infinite; }
+.adv-hud-cell--clock { justify-self: end; }
+
+/* ----------------------------------------------------------------- stage */
+.adv-stage {
+    position: relative;
+    padding: 26px 18px 8px;
+}
+/* Above the cards, not behind them: the runner travels in front of the pipes
+   and the packets have to clear the opaque pipe bodies. Nothing on the canvas
+   is interactive, so pointer-events stays off and the cards below still take
+   hover and focus normally. */
+.adv-canvas {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
     display: block;
-    margin-top: 3px;
-    font-size: 12px;
-    color: var(--mute);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    pointer-events: none;
 }
 
-.node-pair { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.adv-track {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0 20px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
 
-/* Three abreast leaves ~80px for text if the icon stays inline, which ellipses
-   "Meta Cloud API". Stacking the badge over the label gives the text the full
-   column. */
-.node-pair .node {
+.adv-node {
+    position: relative;
+    display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     gap: 10px;
 }
-.node-pair .node-body { width: 100%; }
+.adv-node[data-adv-row="main"]    { grid-column: var(--adv-col); grid-row: 1; }
+.adv-node[data-adv-row="service"] { grid-column: var(--adv-col); grid-row: 3; }
+.adv-node[data-adv-row="final"]   { grid-column: 1 / -1; grid-row: 4; }
 
-/* Connector with a travelling pulse */
-.wire {
-    position: relative;
-    height: 30px;
-    margin-left: 32px;
-    border-left: 1px dashed var(--line-h);
+/* The gap the branch pipes are drawn into, and the run to the final rail. */
+.adv-track::before { content: ""; grid-column: 1 / -1; grid-row: 2; height: 92px; }
+
+.adv-node-label {
+    padding: 8px 16px;
+    border: 1px solid var(--adv-line-h);
+    border-radius: var(--radius-md);
+    background: var(--adv-panel-solid);
+    font: 600 13px/1.2 var(--font-display);
+    text-align: center;
+    transition: border-color .4s var(--adv-ease), color .4s var(--adv-ease);
 }
-.wire::after {
+
+/* ----------------------------------------------------------------- pipes */
+.adv-pipe {
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr) 16px;
+    align-items: stretch;
+    width: 100%;
+    height: 72px;
+}
+.adv-pipe--sm { height: 60px; }
+
+.adv-pipe-cap {
+    border: 1px solid rgba(148, 163, 184, .22);
+    border-radius: 4px;
+    background:
+        linear-gradient(180deg, #2b364e 0%, #151d2e 46%, #0d1424 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07);
+}
+
+.adv-pipe-core {
+    position: relative;
+    display: grid;
+    place-items: center;
+    border-block: 1px solid rgba(148, 163, 184, .2);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, .1) 0%, transparent 22%),
+        linear-gradient(180deg, #101a2c 0%, #0a1220 100%);
+    color: var(--adv-dim);
+    transition: background .5s var(--adv-ease), color .5s var(--adv-ease), box-shadow .5s var(--adv-ease);
+}
+.adv-pipe-core svg { width: 26px; height: 26px; }
+
+/* The lit interior. Held at 0 opacity so the tone can cross-fade in without
+   the tube ever repainting its own background. */
+.adv-pipe-core::before {
     content: "";
     position: absolute;
-    left: -3px;
-    top: 0;
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: var(--brand-500);
-    box-shadow: 0 0 0 3px var(--brand-soft);
+    inset: 0;
     opacity: 0;
+    background: color-mix(in srgb, var(--adv-tone) 26%, transparent);
+    box-shadow:
+        inset 0 0 26px color-mix(in srgb, var(--adv-tone) 45%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, .16);
+    transition: opacity .5s var(--adv-ease);
 }
-.wire--split {
-    margin-left: 0;
-    height: 24px;
-    border-left: 0;
-    background:
-        /* stub down from the rail */
-        linear-gradient(var(--line-h), var(--line-h)) no-repeat 32px 0 / 1px 12px,
-        /* crossbar, from the stub across to the last drop */
-        linear-gradient(90deg,
-            transparent 0 32px,
-            var(--line-h) 32px 83.334%,
-            transparent 83.334%) no-repeat 0 12px / 100% 1px,
-        /* one drop per provider column centre */
-        linear-gradient(var(--line-h), var(--line-h)) no-repeat 16.667% 12px / 1px 12px,
-        linear-gradient(var(--line-h), var(--line-h)) no-repeat 50% 12px / 1px 12px,
-        linear-gradient(var(--line-h), var(--line-h)) no-repeat 83.333% 12px / 1px 12px;
-}
-/* The T-connector fans out to three providers at once, which is one dot more
-   than ::before/::after can supply — hence the three <i> children in the markup.
-   Their offsets match the branch drops painted by the gradients above. */
-.wire--split::after { content: none; }
 
-.wire--split i {
+.adv-node.is-active .adv-pipe-core,
+.adv-node.is-done .adv-pipe-core { color: #fff; }
+.adv-node.is-active .adv-pipe-core::before { opacity: 1; }
+.adv-node.is-done .adv-pipe-core::before { opacity: .72; }
+
+.adv-node.is-active .adv-node-label {
+    border-color: color-mix(in srgb, var(--adv-tone) 55%, transparent);
+    color: #fff;
+}
+.adv-node.is-active .adv-pipe-core svg { animation: advPop .5s var(--adv-ease); }
+
+/* ----------------------------------------------------------------- cards */
+.adv-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--adv-line);
+    border-radius: var(--radius-md);
+    background: var(--adv-panel);
+    color: inherit;
+    font: inherit;
+    text-align: center;
+    cursor: help;
+    transition: border-color .4s var(--adv-ease), background .4s var(--adv-ease), transform .4s var(--adv-ease);
+}
+.adv-card:hover,
+.adv-card:focus-visible {
+    border-color: var(--adv-line-h);
+    background: rgba(23, 33, 56, .82);
+    transform: translateY(-2px);
+}
+.adv-card:focus-visible { outline: 2px solid var(--adv-brand); outline-offset: 2px; }
+.adv-card:active { transform: translateY(0) scale(.99); }
+
+.adv-card-detail { font: 500 12px/1.5 var(--font-sans); color: var(--adv-dim); }
+.adv-card-status { font: 500 11px/1 var(--font-mono); color: var(--adv-faint); }
+.adv-card-status b { color: var(--adv-dim); font-weight: 600; }
+.adv-node.is-active .adv-card-status b { color: color-mix(in srgb, var(--adv-tone) 80%, #fff); }
+.adv-node.is-done .adv-card-status b { color: var(--adv-ok); }
+
+/* --------------------------------------------------------------- tooltip */
+.adv-tip {
     position: absolute;
-    top: 11px;
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: var(--brand-500);
-    box-shadow: 0 0 0 3px var(--brand-soft);
+    bottom: calc(100% + 10px);
+    left: 50%;
+    z-index: 4;
+    width: max(200px, 100%);
+    padding: 10px 12px;
+    border: 1px solid var(--adv-line-h);
+    border-radius: var(--radius-md);
+    background: #0b1120;
+    font: 500 12px/1.5 var(--font-sans);
+    color: var(--adv-dim);
+    text-align: left;
     opacity: 0;
+    visibility: hidden;
+    transform: translate(-50%, 6px);
+    transition: opacity .3s var(--adv-ease), transform .3s var(--adv-ease), visibility .3s;
+    box-shadow: 0 18px 40px -18px rgba(0, 0, 0, .9);
 }
-.wire--split i:nth-child(1) { left: calc(16.667% - 2px); }
-.wire--split i:nth-child(2) { left: calc(50% - 2px); }
-.wire--split i:nth-child(3) { left: calc(83.333% - 2px); }
-
-.flow-note {
-    margin-top: 18px;
-    padding-top: 16px;
-    border-top: 1px solid var(--line);
-    font: 500 11px/1.5 var(--font-mono);
-    color: var(--mute);
-}
-
-/* Continuous trace, armed once the diagram scrolls in (.flow).
-
-   The panel sits above the fold, so the observer fires during first paint and a
-   one-shot reveal is over before the diagram is read. The nodes still fade in
-   once, but the trace loops: a packet lights each node in turn and walks every
-   connector, then rests for the back half of the cycle and repeats.
-
-   --cycle is the single source of truth for the loop; every delay below is a
-   fraction of it, so retiming the whole trace means changing one number. */
-.flow { --cycle: 4.8s; }
-
-.flow .node {
-    animation:
-        nodeIn .6s ease both,
-        nodeLit var(--cycle, 4.8s) linear infinite;
-}
-.flow .wire::after,
-.flow .wire--split i {
-    animation: pulseDown var(--cycle, 4.8s) linear infinite;
-}
-/* The branch drops are 12px, not 30px, so they need their own travel. */
-.flow .wire--split i { animation-name: pulseBranch; }
-
-/* First delay in each pair is the one-shot entry stagger, kept under ~1.4s end
-   to end: the nodes hold their `from` state (opacity 0) until it elapses, so a
-   long stagger means visibly missing content on a phone where the whole diagram
-   is on screen at once. Second delay is the node's slot in the looping trace. */
-.flow .node[data-step="1"] { animation-delay: .05s, calc(var(--cycle) * 0);   }
-.flow .node[data-step="2"] { animation-delay: .20s, calc(var(--cycle) * .20); }
-.flow .node[data-step="3"] { animation-delay: .35s, calc(var(--cycle) * .40); }
-.flow .node[data-step="4"] { animation-delay: .50s, calc(var(--cycle) * .56); }
-.flow .node[data-step="5"] { animation-delay: .55s, calc(var(--cycle) * .57); }
-.flow .node[data-step="6"] { animation-delay: .60s, calc(var(--cycle) * .58); }
-.flow .node[data-step="7"] { animation-delay: .75s, calc(var(--cycle) * .76); }
-
-/* Each connector departs as its upstream node lights and arrives as the
-   downstream one does, so the dot is always between two lit boxes. */
-.flow .wire[data-step="1"]::after { animation-delay: calc(var(--cycle) * .07); }
-.flow .wire[data-step="2"]::after { animation-delay: calc(var(--cycle) * .27); }
-.flow .wire[data-step="4"]::after { animation-delay: calc(var(--cycle) * .63); }
-
-/* The split reaches all three providers at once. The ::after delay only ever
-   applies on narrow screens, where the T straightens into a single run. */
-.flow .wire[data-step="3"]::after,
-.flow .wire--split[data-step="3"] i { animation-delay: calc(var(--cycle) * .47); }
-
-@keyframes nodeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: none; }
+.adv-card:hover ~ .adv-tip,
+.adv-card:focus-visible ~ .adv-tip {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, 0);
 }
 
-/* Lit for a tenth of the cycle, then handed on to the next node. */
-@keyframes nodeLit {
-    0% {
-        border-color: var(--line);
-        background: var(--panel);
-        box-shadow: 0 0 0 0 transparent;
-    }
-    2%, 12% {
-        border-color: var(--brand-soft-line);
-        background: var(--brand-soft);
-        box-shadow: 0 0 0 3px var(--brand-soft);
-    }
-    18%, 100% {
-        border-color: var(--line);
-        background: var(--panel);
-        box-shadow: 0 0 0 0 transparent;
-    }
+/* ------------------------------------------------------- final rail + portal */
+.adv-node--final {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    min-height: 104px;
+    margin-top: 34px;
+}
+.adv-final-rail {
+    position: absolute;
+    inset-inline: 0;
+    top: 50%;
+    height: 46px;
+    transform: translateY(-50%);
+    border-block: 1px solid rgba(61, 127, 255, .28);
+    border-radius: 6px;
+    z-index: 0;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, .08) 0%, transparent 24%),
+        linear-gradient(180deg, #0e1c36 0%, #081226 100%);
+    pointer-events: none;
+}
+.adv-card--final {
+    position: relative;
+    /* Above the canvas, so the rail passes behind the card the way a pipe
+       runs behind a sign rather than across its face. */
+    z-index: 3;
+    flex: 1 1 auto;
+    max-width: 640px;
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    background: var(--adv-panel-solid);
+    border-color: rgba(61, 127, 255, .3);
+    text-align: left;
+}
+.adv-final-icon {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    flex: none;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--adv-brand) 24%, transparent);
+    color: #dce8ff;
+}
+.adv-final-icon svg { width: 22px; height: 22px; }
+.adv-final-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.adv-final-text strong { font: 600 15px/1.2 var(--font-display); }
+.adv-card--final .adv-card-status { margin-left: auto; white-space: nowrap; }
+
+.adv-portal {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 66px;
+    height: 66px;
+    flex: none;
+}
+.adv-portal i {
+    position: absolute;
+    border: 2px solid var(--adv-brand);
+    border-radius: 50%;
+    opacity: .28;
+}
+.adv-portal i:nth-child(1) { inset: 0; }
+.adv-portal i:nth-child(2) { inset: 12px; }
+.adv-portal i:nth-child(3) { inset: 24px; background: var(--adv-brand); opacity: .5; }
+.adv-node--final.is-done .adv-portal i { animation: advPortal 1.6s var(--adv-ease) infinite; }
+.adv-node--final.is-done .adv-portal i:nth-child(2) { animation-delay: .18s; }
+.adv-node--final.is-done .adv-portal i:nth-child(3) { animation-delay: .36s; }
+
+/* ------------------------------------------------------------------ foot */
+.adv-foot {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    padding: 22px 18px 0;
+}
+.adv-panel {
+    padding: 14px 16px;
+    border: 1px solid var(--adv-line);
+    border-radius: var(--radius-md);
+    background: var(--adv-panel);
+}
+.adv-panel-title {
+    display: block;
+    margin-bottom: 10px;
+    font: 600 11px/1 var(--font-mono);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--adv-faint);
+}
+.adv-legend {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font: 500 12px/1 var(--font-sans);
+    color: var(--adv-dim);
+}
+.adv-legend li { display: flex; align-items: center; gap: 8px; }
+.adv-dot { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.adv-dot--brand   { background: var(--adv-brand); }
+.adv-dot--secure  { background: var(--adv-secure); }
+.adv-dot--process { background: var(--adv-process); }
+.adv-dot--ok      { background: var(--adv-ok); }
+
+.adv-journey {
+    margin: 0 0 12px;
+    font: 500 12px/1.5 var(--font-mono);
+    color: var(--adv-dim);
+}
+.adv-journey b { color: var(--adv-ink); font-weight: 600; }
+
+.adv-controls { display: flex; gap: 8px; }
+.adv-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 12px;
+    border: 1px solid var(--adv-line-h);
+    border-radius: var(--radius-sm);
+    background: rgba(23, 33, 56, .7);
+    color: var(--adv-ink);
+    font: 600 12px/1 var(--font-sans);
+    cursor: pointer;
+    transition: background .3s var(--adv-ease), border-color .3s var(--adv-ease), transform .3s var(--adv-ease);
+}
+.adv-btn:hover { background: rgba(35, 48, 78, .9); border-color: var(--adv-brand); }
+.adv-btn:focus-visible { outline: 2px solid var(--adv-brand); outline-offset: 2px; }
+.adv-btn:active { transform: translateY(1px); }
+.adv-btn-pause { display: none; }
+.adv-btn[aria-pressed="false"] .adv-btn-pause { display: inline; }
+.adv-btn[aria-pressed="false"] .adv-btn-play { display: none; }
+
+.adv-bar {
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, .16);
+    overflow: hidden;
+}
+.adv-bar i {
+    display: block;
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--adv-brand);
+    transition: width .3s linear, background .5s var(--adv-ease);
+}
+.adv-bar.is-done i { background: var(--adv-ok); }
+.adv-progress-value {
+    display: block;
+    margin-top: 8px;
+    font: 600 12px/1 var(--font-mono);
+    color: var(--adv-dim);
 }
 
-/* Glides the full 28px of the connector over 15% of the cycle (~0.7s) at a
-   constant rate — `linear` above matters, an eased pulse reads as a twitch.
-   It then parks out of sight at the far end, so the jump back to the top for
-   the next lap happens at opacity 0. */
-@keyframes pulseDown {
-    0%   { opacity: 0; transform: translateY(0); }
-    2%   { opacity: 1; transform: translateY(2px); }
-    13%  { opacity: 1; transform: translateY(26px); }
-    15%  { opacity: 0; transform: translateY(28px); }
-    100% { opacity: 0; transform: translateY(28px); }
+.adv-note {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 22px 0 0;
+    padding: 16px 18px;
+    border-top: 1px solid var(--adv-line);
+    background: rgba(8, 12, 22, .6);
+    font: 500 12px/1.5 var(--font-mono);
+    color: var(--adv-dim);
+}
+.adv-note > span[aria-hidden] { color: var(--adv-secure); }
+.adv-caret {
+    width: 7px;
+    height: 14px;
+    background: var(--adv-brand);
+    animation: advCaret 1.1s steps(2, start) infinite;
 }
 
-/* Same speed down the shorter 12px branch drops, so the fan-out reads as one
-   packet splitting rather than three unrelated blips. */
-@keyframes pulseBranch {
-    0%   { opacity: 0; transform: translateY(0); }
-    1%   { opacity: 1; transform: translateY(1px); }
-    6%   { opacity: 1; transform: translateY(11px); }
-    7%   { opacity: 0; transform: translateY(12px); }
-    100% { opacity: 0; transform: translateY(12px); }
+/* ------------------------------------------------------------ keyframes */
+@keyframes advIdleLight {
+    0%, 88%, 100% { opacity: .55; }
+    94%           { opacity: 1; }
+}
+@keyframes advHeart {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.14); }
+}
+@keyframes advPop {
+    0%   { transform: scale(1); }
+    45%  { transform: scale(1.22); }
+    100% { transform: scale(1); }
+}
+@keyframes advPortal {
+    0%   { transform: scale(1);   opacity: .28; }
+    60%  { transform: scale(1.12); opacity: .7; }
+    100% { transform: scale(1);   opacity: .28; }
+}
+@keyframes advCaret {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0; }
 }
 
 /* ========================================================================
@@ -1284,21 +1539,9 @@ pre.code[hidden] { display: none; }
 
     .hero h1 { font-size: clamp(31px, 8.6vw, 40px); }
 
-    /* Two nodes abreast leave roughly 60px of label at this width. */
-    .node-pair { grid-template-columns: minmax(0, 1fr); }
-
-    /* With the providers stacked there is nothing to branch to, so the
-       T-connector reverts to a straight run and its pulse goes back to one dot
-       walking one path. */
-    .wire--split {
-        height: 30px;
-        margin-left: 32px;
-        border-left: 1px dashed var(--line-h);
-        background: none;
-    }
-    .wire--split i { display: none; }
-    .wire--split::after { content: ""; }
-    .flow { padding: 14px; }
+    .adv-stage { padding: 18px 12px 6px; }
+    .adv-head, .adv-hud, .adv-foot { padding-inline: 12px; }
+    .adv-note { padding-inline: 12px; }
 
     .stat { padding: 22px 16px; }
 
@@ -1309,6 +1552,54 @@ pre.code[hidden] { display: none; }
     pre.code { padding: 14px 16px; font-size: 12.5px; }
     .endpoint { padding: 10px 12px; gap: 8px; }
     .endpoint .pill { margin-left: 0; }
+}
+
+/* Below this the three-across route stops being readable — 360px of viewport
+   over three columns leaves about sixty pixels of label each. So the journey
+   straightens into a single vertical run, which is the same architecture read
+   top to bottom, rather than the same picture shrunk past legibility. */
+@media (max-width: 760px) {
+    .adv-track { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+    .adv-track::before { display: none; }
+
+    .adv-node[data-adv-row="main"],
+    .adv-node[data-adv-row="service"],
+    .adv-node[data-adv-row="final"] {
+        grid-column: 1;
+        grid-row: auto;
+    }
+
+    /* A connector between consecutive stages, so the vertical run still reads
+       as one path rather than a stack of unrelated cards. */
+    .adv-node + .adv-node::before {
+        content: "";
+        position: absolute;
+        top: -18px;
+        left: 50%;
+        width: 2px;
+        height: 18px;
+        background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--adv-tone) 60%, transparent));
+        transform: translateX(-50%);
+    }
+
+    .adv-pipe, .adv-pipe--sm { height: 56px; }
+    .adv-pipe-core svg { width: 22px; height: 22px; }
+
+    .adv-node--final { flex-direction: column; margin-top: 0; padding: 0; }
+    .adv-final-rail { display: none; }
+    .adv-card--final { flex-direction: column; text-align: center; max-width: none; }
+    .adv-card--final .adv-card-status { margin-left: 0; }
+    .adv-portal { width: 52px; height: 52px; }
+
+    .adv-foot { grid-template-columns: minmax(0, 1fr); }
+    .adv-hud { grid-template-columns: auto 1fr auto; }
+    .adv-host { display: none; }
+
+    /* The tooltip cannot sit above a card that is already near the viewport
+       edge, and there is no hover on a touch screen anyway. */
+    .adv-tip { position: static; width: auto; opacity: 1; visibility: visible; transform: none;
+               margin-top: 8px; background: transparent; border: 0; padding: 0; box-shadow: none;
+               font-size: 11px; text-align: center; }
 }
 
 /* ========================================================================
@@ -1331,11 +1622,15 @@ pre.code[hidden] { display: none; }
 @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     .reveal.in { animation: none; }
-    .flow .node,
-    .flow .wire::after,
-    .flow .wire--split i { animation: none; }
-    .flow .wire::after,
-    .flow .wire--split i { opacity: 0; }
+    /* The canvas layer never starts (the script checks the same query), so
+       these only have to settle the CSS ornament. Stages still light and
+       statuses still change — the journey is conveyed by state, not motion. */
+    .adv-lights i,
+    .adv-hud-cell--life svg,
+    .adv-caret,
+    .adv-node--final.is-done .adv-portal i { animation: none; }
+    .adv-caret { opacity: 1; }
+    .adv-card:hover { transform: none; }
     .dot--live { animation: none; }
     .card:hover { transform: none; }
     *, *::before, *::after {
@@ -1351,6 +1646,18 @@ pre.code[hidden] { display: none; }
 @media print {
     .site-header, .site-footer, .nav-actions, .docs-nav, .cta, .copy-btn { display: none !important; }
     body { background: #fff; color: #000; }
-    .card, .step, .flow, .status-panel { box-shadow: none; break-inside: avoid; }
+    .card, .step, .adv, .status-panel { box-shadow: none; break-inside: avoid; }
     .section { padding: 24px 0; }
+
+    /* The adventure is a dark screen with a decorative scoreboard. On paper it
+       reduces to the route itself, in ink that does not flood the page. */
+    .adv-canvas, .adv-hud, .adv-portal, .adv-lights, .adv-caret,
+    .adv-controls, .adv::before { display: none !important; }
+    .adv { background: #fff; color: #000; border-color: #999; }
+    .adv-track { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+    .adv-node[data-adv-row] { grid-column: 1; grid-row: auto; }
+    .adv-node-label, .adv-card, .adv-panel, .adv-note { background: #fff; border-color: #bbb; color: #000; }
+    .adv-pipe { height: 34px; }
+    .adv-tip { position: static; opacity: 1; visibility: visible; transform: none;
+               border: 0; padding: 4px 0 0; background: none; box-shadow: none; color: #333; }
 }

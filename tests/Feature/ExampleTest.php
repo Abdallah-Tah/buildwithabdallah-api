@@ -10,7 +10,7 @@ test('the application returns a successful response', function () {
     $response
         ->assertStatus(200)
         ->assertSee('Build With Abdallah')
-        ->assertSee('One secure layer for')
+        ->assertSee('One credential boundary for every product I ship.', false)
         ->assertSee('api.buildwithabdallah.com')
         ->assertDontSee('APP_KEY');
 });

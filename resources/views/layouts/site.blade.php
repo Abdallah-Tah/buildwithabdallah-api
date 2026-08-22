@@ -66,5 +66,6 @@
     @include('partials.site-footer')
 
     <script src="{{ $asset('js/site.js') }}" defer></script>
+    @stack('scripts')
 </body>
 </html>
