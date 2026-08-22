@@ -550,10 +550,12 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
        route are both positioned from these, so the artwork, the layout and
        the request path cannot drift apart. */
     --adv-machine-w: 206px;
-    --adv-service-w: 226px;
+    --adv-capsule-w: 252px;
+    --adv-capsule-h: 84px;
+    --adv-service-w: 232px;
     --adv-pipe-h: 40px;
     --adv-gap: 10px;
-    --adv-fan-gap: 96px;
+    --adv-fan-gap: 78px;
 
     --adv-ease: cubic-bezier(.32, .72, 0, 1);
 
@@ -633,7 +635,8 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
 /* ----------------------------------------------------------------- stage */
 .adv-stage {
     position: relative;
-    padding: 32px 14px 6px;
+    /* The top padding is the runner's headroom above the upper pipeline. */
+    padding: 74px 14px 6px;
 }
 .adv-canvas {
     position: absolute;
@@ -693,7 +696,26 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
     gap: 5px;
     padding-bottom: 12px;
 }
-.adv-node[data-adv-row="main"]    { grid-column: var(--adv-col); grid-row: 1; }
+/* A fixed three-row grid, not a flex column: the capsules must share one
+   baseline whatever the detail text below them does. When they did not, they
+   sat at different heights, the pipe run had no single centreline to follow,
+   and the layout probe read the row as a stacked (mobile) one and hid the
+   pipework entirely.
+
+   Labels sit below the pipe so the space above it stays clear for the runner,
+   which is the surface it travels along. */
+.adv-node[data-adv-row="main"] {
+    grid-column: var(--adv-col);
+    grid-row: 1;
+    display: grid;
+    grid-template-rows: var(--adv-capsule-h) auto auto;
+    justify-items: center;
+    align-content: start;
+    row-gap: 7px;
+}
+.adv-node[data-adv-row="main"] .adv-machine { grid-row: 1; align-self: center; }
+.adv-node[data-adv-row="main"] .adv-chip { grid-row: 2; }
+.adv-node[data-adv-row="main"] .adv-meta { grid-row: 3; }
 .adv-node[data-adv-row="service"] { grid-column: var(--adv-col); grid-row: 3; padding-top: 14px; }
 .adv-node[data-adv-row="final"]   { grid-column: 1 / -1; grid-row: 4; }
 .adv-track::before { content: ""; grid-column: 1 / -1; grid-row: 2; height: var(--adv-fan-gap); }
@@ -735,6 +757,37 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
    board without landing on it. It becomes a chip above the machine instead —
    which is also how the reference composition reads. */
 .adv-machine--service { width: min(100%, var(--adv-service-w)); }
+
+/* Inline module: a barrel dropped into the pipe run. It carries no base, so
+   the row reads as one traversable pipeline rather than three objects. */
+/* Explicit height so all three capsules line up exactly: the source crops
+   differ by a few pixels and the pipe needs one centreline. */
+.adv-machine--inline { width: min(100%, var(--adv-capsule-w)); height: var(--adv-capsule-h); }
+.adv-machine--inline > img { width: 100%; height: 100%; object-fit: contain; }
+
+/* Names float above the pipe: there is no sign board on a bare capsule. */
+.adv-chip {
+    padding: 4px 11px;
+    border: 1px solid color-mix(in srgb, var(--adv-tone) 45%, transparent);
+    border-radius: 999px;
+    background: rgba(9, 14, 26, .92);
+    font: 600 12px/1.2 var(--font-display);
+    color: #fff;
+    white-space: nowrap;
+}
+.adv-node.is-active .adv-chip { border-color: color-mix(in srgb, var(--adv-tone) 85%, transparent); }
+
+/* One dot instead of a "Status:" prefix on every object. */
+.adv-status-dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    margin-right: 6px;
+    border-radius: 50%;
+    background: var(--adv-faint);
+    transition: background .4s var(--adv-ease);
+}
+.adv-node.is-active .adv-status-dot { background: var(--adv-tone); }
+.adv-node.is-done .adv-status-dot { background: var(--adv-ok); }
 
 .adv-sign--service {
     top: auto;

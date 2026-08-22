@@ -164,6 +164,29 @@ def _sign_board(sprite: Image.Image) -> dict:
     }
 
 
+def _capsule(sprite: Image.Image) -> Image.Image:
+    """
+    Just the glowing barrel of a station, without its sign or its base.
+
+    The upper three stages are modules inserted into one continuous pipe, not
+    machines standing on platforms — the platform artwork is what made that row
+    read as three separate objects placed near a line. The barrel is the widest
+    band in the sprite, because it spans the full width with its end flanges
+    while the sign and the base do not.
+    """
+    import numpy as np  # noqa: PLC0415
+
+    opaque = np.array(sprite.getchannel("A")) > 40
+    width = opaque.sum(axis=1) / sprite.width
+    rows = np.where(width >= width.max() * 0.9)[0]
+    top, bottom = int(rows.min()), int(rows.max())
+
+    # The flanges flare slightly beyond the widest rows; keep them.
+    pad = round((bottom - top) * 0.22)
+
+    return sprite.crop((0, max(0, top - pad), sprite.width, min(sprite.height, bottom + pad)))
+
+
 def _tileable_body(horizontal: Image.Image) -> Image.Image:
     """
     A repeatable centre slice of the straight pipe.
@@ -238,6 +261,17 @@ def write_assets(sheets, source, out, regions, trim) -> None:
         "h": body.height,
     }
     print(f"  pipes/body.webp  {body.width}x{body.height} (tileable)")
+
+    for name in ("products", "signature", "central"):
+        full = Image.open(out / f"stations/{name}.webp").convert("RGBA")
+        capsule = _capsule(full)
+        capsule.save(out / f"stations/{name}-capsule.webp", "WEBP", quality=94, method=6)
+        manifest["stations"][f"{name}-capsule"] = {
+            "src": f"/images/api-adventure/stations/{name}-capsule.webp",
+            "w": capsule.width,
+            "h": capsule.height,
+        }
+        print(f"  stations/{name}-capsule.webp  {capsule.width}x{capsule.height}")
 
     # Tinting multiplies, so a blue orb times amber comes out green. The
     # packet ships as luminance and takes its colour from the stage instead.

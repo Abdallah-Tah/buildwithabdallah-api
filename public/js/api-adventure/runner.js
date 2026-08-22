@@ -71,7 +71,8 @@ export class Runner {
      * @param {THREE.Vector3} point where the request is on the route
      * @param {number} dt seconds since the previous frame
      */
-    update(point, dt) {
+    /** @param {number} lift half the pipe height, so the feet land on its top */
+    update(point, dt, lift = 0) {
         this.clock += dt;
 
         const { texture, frames } = this.states[this.state];
@@ -79,8 +80,8 @@ export class Runner {
         const index = Math.floor(this.clock * FRAME_RATE) % frames;
         texture.offset.x = index / frames;
 
-        // Feet on the pipe rather than centred on it.
-        this.mesh.position.set(point.x, point.y - RUNNER_HEIGHT * 0.42, 2);
+        // Feet on top of the pipe, not inside it.
+        this.mesh.position.set(point.x, point.y - lift - RUNNER_HEIGHT * 0.4, 2);
         this.mesh.visible = this.visible;
     }
 

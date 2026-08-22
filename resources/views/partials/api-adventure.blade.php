@@ -69,16 +69,17 @@
                     style="--adv-col: {{ $i + 1 }}"
                     data-adv-node="{{ $stage['id'] }}"
                     data-adv-row="main">
-                    <span class="adv-machine" style="{{ $sign($stage['art']) }}" data-adv-port="{{ $stage['id'] }}">
+                    {{-- Capsule only: the upper stages are modules inserted
+                         into one continuous pipe, so their platform artwork is
+                         deliberately not used. --}}
+                    <span class="adv-machine adv-machine--inline" data-adv-port="{{ $stage['id'] }}">
                         <img src="{{ $asset('stations/'.$stage['art']) }}" alt="" loading="lazy" decoding="async">
-                        {{-- The sign on the machine is blank artwork on purpose;
-                             the name is real text sitting on it. --}}
-                        <span class="adv-sign">{{ $stage['title'] }}</span>
                     </span>
+                    <span class="adv-chip">{{ $stage['title'] }}</span>
                     <button type="button" class="adv-meta" aria-describedby="adv-tip-{{ $stage['id'] }}">
                         <span class="adv-meta-detail">{{ $stage['detail'] }}</span>
                         <span class="adv-meta-status" data-adv-status data-adv-states="{{ implode('|', $stage['states']) }}">
-                            Status: <b>{{ $stage['states'][0] }}</b>
+                            <i class="adv-status-dot" aria-hidden="true"></i><b>{{ $stage['states'][0] }}</b>
                         </span>
                     </button>
                     <span class="adv-tip" id="adv-tip-{{ $stage['id'] }}" role="tooltip">{{ $stage['tip'] }}</span>
@@ -101,7 +102,7 @@
                     <button type="button" class="adv-meta" aria-describedby="adv-tip-{{ $service['id'] }}">
                         <span class="adv-meta-detail">{{ $service['detail'] }}</span>
                         <span class="adv-meta-status" data-adv-status data-adv-states="{{ implode('|', $service['states']) }}">
-                            Status: <b>{{ $service['states'][0] }}</b>
+                            <i class="adv-status-dot" aria-hidden="true"></i><b>{{ $service['states'][0] }}</b>
                         </span>
                     </button>
                     <span class="adv-tip" id="adv-tip-{{ $service['id'] }}" role="tooltip">{{ $service['tip'] }}</span>
@@ -125,7 +126,7 @@
 
                 <button type="button" class="adv-meta adv-meta--final" aria-describedby="adv-tip-{{ $destination['id'] }}">
                     <span class="adv-meta-status" data-adv-status data-adv-states="{{ implode('|', $destination['states']) }}">
-                        Status: <b>{{ $destination['states'][0] }}</b>
+                        <i class="adv-status-dot" aria-hidden="true"></i><b>{{ $destination['states'][0] }}</b>
                     </span>
                 </button>
                 <span class="adv-tip" id="adv-tip-{{ $destination['id'] }}" role="tooltip">{{ $destination['tip'] }}</span>

@@ -206,7 +206,7 @@ export class AdventureScene {
 
         this.runner.visible = onMachine && !timeline.complete;
         this.runner.setState(this.runnerState(timeline, beat, local, onMachine));
-        this.runner.update(point, dt);
+        this.runner.update(point, dt, this.geo.pipeHalf ?? 0);
 
         this.orb.update(point, tone, !onMachine || timeline.complete, this.clock);
         this.packets.setTone(tone);

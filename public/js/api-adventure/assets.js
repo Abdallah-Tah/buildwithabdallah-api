@@ -154,6 +154,21 @@ export const adventureAssets = {
                 'top': 0.136,
                 'width': 0.5152
             }
+        },
+        'products-capsule': {
+            'src': '/images/api-adventure/stations/products-capsule.webp',
+            'w': 474,
+            'h': 158
+        },
+        'signature-capsule': {
+            'src': '/images/api-adventure/stations/signature-capsule.webp',
+            'w': 451,
+            'h': 158
+        },
+        'central-capsule': {
+            'src': '/images/api-adventure/stations/central-capsule.webp',
+            'w': 471,
+            'h': 157
         }
     },
     'portal': {

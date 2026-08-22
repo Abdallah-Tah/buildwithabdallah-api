@@ -25,15 +25,16 @@ export function geometry(anchors) {
 
     const stacked = Math.abs(ports.signature.cy - ports.products.cy) > 20;
 
-    // The machines are tall images; the pipe belongs at the barrel, not at
-    // the centre of the whole sprite.
+    // The upper stages are bare capsules, so their centre is the centreline.
+    // The service machines are full sprites and their barrel sits higher.
+    const centre = (port) => port.y + port.h * 0.5;
     const barrel = (port) => port.y + port.h * 0.44;
 
     if (stacked) {
         return { stacked: true, width, height, ports };
     }
 
-    const mainY = barrel(ports.products);
+    const mainY = centre(ports.products);
     const serviceY = barrel(ports.ai);
     const serviceTop = Math.min(...SERVICES.map((id) => boxes[id]?.top ?? ports[id].y));
     // The whole node, not the machine: the detail and status sit below the
@@ -59,5 +60,7 @@ export function geometry(anchors) {
         entryX: -60,
         portalX: ports.portal ? ports.portal.cx : width - 60,
         branchX: (id) => ports[id].cx,
+        // Half the pipe, so the runner can stand on top of it rather than in it.
+        pipeHalf: ports.products.h * 0.5,
     };
 }

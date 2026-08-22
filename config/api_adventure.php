@@ -29,7 +29,7 @@ return [
     'stages' => [
         [
             'id' => 'products',
-            'art' => 'products.webp',
+            'art' => 'products-capsule.webp',
             'states' => ['Idle', 'Sending', 'Connected'],
             'title' => 'Connected Products',
             'detail' => 'Kirada · Djib Payroll · SMKit',
@@ -40,7 +40,7 @@ return [
         ],
         [
             'id' => 'signature',
-            'art' => 'signature.webp',
+            'art' => 'signature-capsule.webp',
             'states' => ['Waiting', 'Verifying…', 'Verified'],
             'title' => 'Signature Gate',
             'detail' => 'X-BWA-Signature · 300s window · single-use nonce',
@@ -51,7 +51,7 @@ return [
         ],
         [
             'id' => 'central-api',
-            'art' => 'central.webp',
+            'art' => 'central-capsule.webp',
             'states' => ['Waiting', 'Validating', 'Queued'],
             'title' => 'Central API',
             'detail' => 'Validate → Persist → Enqueue',

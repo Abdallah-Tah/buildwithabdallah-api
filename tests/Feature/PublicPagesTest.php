@@ -71,18 +71,29 @@ it('ships every sprite the asset manifest promises', function (): void {
     }
 });
 
-it('knows where the blank sign board sits on every station', function (): void {
-    // The station artwork ships with empty boards so the labels can be real
-    // text. Without a measured position the label lands somewhere arbitrary on
-    // the machine, which is how it looked before the measurement existed.
+it('knows where the blank sign board sits on every service station', function (): void {
+    // Only the provider stations use their sign board — the upper three are
+    // bare capsules inserted into the pipe and carry a floating chip instead.
+    // Without a measured position the label lands somewhere arbitrary on the
+    // machine, which is how it looked before the measurement existed.
     $manifest = json_decode(file_get_contents(public_path('images/api-adventure/manifest.json')), true);
 
-    foreach (config('api_adventure.stages') + config('api_adventure.services') as $stage) {
-        $sign = $manifest['stations'][basename($stage['art'], '.webp')]['sign'] ?? null;
+    foreach (config('api_adventure.services') as $service) {
+        $sign = $manifest['stations'][basename($service['art'], '.webp')]['sign'] ?? null;
 
-        expect($sign)->toBeArray("no sign box measured for {$stage['id']}")
+        expect($sign)->toBeArray("no sign box measured for {$service['id']}")
             ->and($sign['top'])->toBeGreaterThan(0.0)->toBeLessThan(0.6)
             ->and($sign['width'])->toBeGreaterThan(0.2);
+    }
+});
+
+it('uses a capsule crop for every stage that sits inside the pipe', function (): void {
+    // The upper stages must not ship their platform artwork: the base is what
+    // made that row read as three objects standing near a line rather than as
+    // one continuous pipeline.
+    foreach (config('api_adventure.stages') as $stage) {
+        expect($stage['art'])->toEndWith('-capsule.webp')
+            ->and(public_path('images/api-adventure/stations/'.$stage['art']))->toBeReadableFile();
     }
 });
 
