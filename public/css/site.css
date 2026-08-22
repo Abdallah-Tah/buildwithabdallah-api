@@ -518,8 +518,9 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
 
 /* ========================================================================
    7. Flow diagram — the animated pipeline
-      Nodes light in sequence and a pulse travels each connector, tracing the
-      real request path. Everything here is disabled under reduced motion.
+      Nodes light in sequence and a pulse walks each connector, tracing the
+      real request path on a loop. Everything here is disabled under reduced
+      motion.
    ======================================================================== */
 .flow {
     padding: 20px;
@@ -553,20 +554,21 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
     border: 1px solid var(--line);
     border-radius: var(--radius-md);
     background: var(--panel);
-    transition: border-color .4s, background-color .4s;
 }
+/* The badge shares --brand-soft with a lit node, so it needs its own outline
+   to stay readable as the trace passes through. */
 .node-icon {
     flex: none;
     width: 38px;
     height: 38px;
     display: grid;
     place-items: center;
+    border: 1px solid var(--brand-soft-line);
     border-radius: var(--radius-sm);
     background: var(--brand-soft);
     color: var(--brand-read);
-    font: 600 11px/1 var(--font-mono);
-    letter-spacing: .02em;
 }
+.node-icon svg { width: 18px; height: 18px; }
 /* Scoped to .node-body: a bare `.node span` would outrank .node-icon and
    flatten the badge. */
 .node-body { flex: 1; min-width: 0; }
@@ -587,7 +589,17 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
     white-space: nowrap;
 }
 
-.node-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+.node-pair { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+
+/* Three abreast leaves ~80px for text if the icon stays inline, which ellipses
+   "Meta Cloud API". Stacking the badge over the label gives the text the full
+   column. */
+.node-pair .node {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+}
+.node-pair .node-body { width: 100%; }
 
 /* Connector with a travelling pulse */
 .wire {
@@ -613,13 +625,36 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
     height: 24px;
     border-left: 0;
     background:
+        /* stub down from the rail */
         linear-gradient(var(--line-h), var(--line-h)) no-repeat 32px 0 / 1px 12px,
-        linear-gradient(var(--line-h), var(--line-h)) no-repeat 25% 12px / 50% 1px,
-        linear-gradient(var(--line-h), var(--line-h)) no-repeat 25% 12px / 1px 12px,
-        linear-gradient(var(--line-h), var(--line-h)) no-repeat 75% 12px / 1px 12px;
+        /* crossbar, from the stub across to the last drop */
+        linear-gradient(90deg,
+            transparent 0 32px,
+            var(--line-h) 32px 83.334%,
+            transparent 83.334%) no-repeat 0 12px / 100% 1px,
+        /* one drop per provider column centre */
+        linear-gradient(var(--line-h), var(--line-h)) no-repeat 16.667% 12px / 1px 12px,
+        linear-gradient(var(--line-h), var(--line-h)) no-repeat 50% 12px / 1px 12px,
+        linear-gradient(var(--line-h), var(--line-h)) no-repeat 83.333% 12px / 1px 12px;
 }
-/* The branching connector has no single path for a pulse to walk. */
+/* The T-connector fans out to three providers at once, which is one dot more
+   than ::before/::after can supply — hence the three <i> children in the markup.
+   Their offsets match the branch drops painted by the gradients above. */
 .wire--split::after { content: none; }
+
+.wire--split i {
+    position: absolute;
+    top: 11px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--brand-500);
+    box-shadow: 0 0 0 3px var(--brand-soft);
+    opacity: 0;
+}
+.wire--split i:nth-child(1) { left: calc(16.667% - 2px); }
+.wire--split i:nth-child(2) { left: calc(50% - 2px); }
+.wire--split i:nth-child(3) { left: calc(83.333% - 2px); }
 
 .flow-note {
     margin-top: 18px;
@@ -629,34 +664,96 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
     color: var(--mute);
 }
 
-/* Sequenced animation. Runs once the diagram scrolls into view (.flow.live). */
-.flow.live .node { animation: nodeIn .6s ease both; }
-.flow.live .wire::after { animation: pulseDown 2.6s cubic-bezier(.4, 0, .2, 1) infinite; }
+/* Continuous trace, armed once the diagram scrolls in (.flow).
 
-/* Kept under ~1.3s end to end. The nodes hold their `from` state (opacity 0)
-   until their delay elapses, so a long stagger means visibly missing content
-   on a phone where the whole diagram is on screen at once. */
-.flow.live .node[data-step="1"] { animation-delay: .05s; }
-.flow.live .node[data-step="2"] { animation-delay: .20s; }
-.flow.live .node[data-step="3"] { animation-delay: .35s; }
-.flow.live .node[data-step="4"] { animation-delay: .50s; }
-.flow.live .node[data-step="5"] { animation-delay: .55s; }
-.flow.live .node[data-step="6"] { animation-delay: .70s; }
+   The panel sits above the fold, so the observer fires during first paint and a
+   one-shot reveal is over before the diagram is read. The nodes still fade in
+   once, but the trace loops: a packet lights each node in turn and walks every
+   connector, then rests for the back half of the cycle and repeats.
 
-.flow.live .wire[data-step="1"]::after { animation-delay: .18s; }
-.flow.live .wire[data-step="2"]::after { animation-delay: .33s; }
-.flow.live .wire[data-step="3"]::after { animation-delay: .48s; }
-.flow.live .wire[data-step="4"]::after { animation-delay: .63s; }
+   --cycle is the single source of truth for the loop; every delay below is a
+   fraction of it, so retiming the whole trace means changing one number. */
+.flow { --cycle: 4.8s; }
+
+.flow .node {
+    animation:
+        nodeIn .6s ease both,
+        nodeLit var(--cycle, 4.8s) linear infinite;
+}
+.flow .wire::after,
+.flow .wire--split i {
+    animation: pulseDown var(--cycle, 4.8s) linear infinite;
+}
+/* The branch drops are 12px, not 30px, so they need their own travel. */
+.flow .wire--split i { animation-name: pulseBranch; }
+
+/* First delay in each pair is the one-shot entry stagger, kept under ~1.4s end
+   to end: the nodes hold their `from` state (opacity 0) until it elapses, so a
+   long stagger means visibly missing content on a phone where the whole diagram
+   is on screen at once. Second delay is the node's slot in the looping trace. */
+.flow .node[data-step="1"] { animation-delay: .05s, calc(var(--cycle) * 0);   }
+.flow .node[data-step="2"] { animation-delay: .20s, calc(var(--cycle) * .20); }
+.flow .node[data-step="3"] { animation-delay: .35s, calc(var(--cycle) * .40); }
+.flow .node[data-step="4"] { animation-delay: .50s, calc(var(--cycle) * .56); }
+.flow .node[data-step="5"] { animation-delay: .55s, calc(var(--cycle) * .57); }
+.flow .node[data-step="6"] { animation-delay: .60s, calc(var(--cycle) * .58); }
+.flow .node[data-step="7"] { animation-delay: .75s, calc(var(--cycle) * .76); }
+
+/* Each connector departs as its upstream node lights and arrives as the
+   downstream one does, so the dot is always between two lit boxes. */
+.flow .wire[data-step="1"]::after { animation-delay: calc(var(--cycle) * .07); }
+.flow .wire[data-step="2"]::after { animation-delay: calc(var(--cycle) * .27); }
+.flow .wire[data-step="4"]::after { animation-delay: calc(var(--cycle) * .63); }
+
+/* The split reaches all three providers at once. The ::after delay only ever
+   applies on narrow screens, where the T straightens into a single run. */
+.flow .wire[data-step="3"]::after,
+.flow .wire--split[data-step="3"] i { animation-delay: calc(var(--cycle) * .47); }
 
 @keyframes nodeIn {
     from { opacity: 0; transform: translateY(10px); }
     to   { opacity: 1; transform: none; }
 }
+
+/* Lit for a tenth of the cycle, then handed on to the next node. */
+@keyframes nodeLit {
+    0% {
+        border-color: var(--line);
+        background: var(--panel);
+        box-shadow: 0 0 0 0 transparent;
+    }
+    2%, 12% {
+        border-color: var(--brand-soft-line);
+        background: var(--brand-soft);
+        box-shadow: 0 0 0 3px var(--brand-soft);
+    }
+    18%, 100% {
+        border-color: var(--line);
+        background: var(--panel);
+        box-shadow: 0 0 0 0 transparent;
+    }
+}
+
+/* Glides the full 28px of the connector over 15% of the cycle (~0.7s) at a
+   constant rate — `linear` above matters, an eased pulse reads as a twitch.
+   It then parks out of sight at the far end, so the jump back to the top for
+   the next lap happens at opacity 0. */
 @keyframes pulseDown {
-    0%        { opacity: 0; transform: translateY(0); }
-    12%       { opacity: 1; }
-    88%       { opacity: 1; }
-    100%      { opacity: 0; transform: translateY(28px); }
+    0%   { opacity: 0; transform: translateY(0); }
+    2%   { opacity: 1; transform: translateY(2px); }
+    13%  { opacity: 1; transform: translateY(26px); }
+    15%  { opacity: 0; transform: translateY(28px); }
+    100% { opacity: 0; transform: translateY(28px); }
+}
+
+/* Same speed down the shorter 12px branch drops, so the fan-out reads as one
+   packet splitting rather than three unrelated blips. */
+@keyframes pulseBranch {
+    0%   { opacity: 0; transform: translateY(0); }
+    1%   { opacity: 1; transform: translateY(1px); }
+    6%   { opacity: 1; transform: translateY(11px); }
+    7%   { opacity: 0; transform: translateY(12px); }
+    100% { opacity: 0; transform: translateY(12px); }
 }
 
 /* ========================================================================
@@ -1191,13 +1288,15 @@ pre.code[hidden] { display: none; }
     .node-pair { grid-template-columns: minmax(0, 1fr); }
 
     /* With the providers stacked there is nothing to branch to, so the
-       T-connector reverts to a straight run and gets its pulse back. */
+       T-connector reverts to a straight run and its pulse goes back to one dot
+       walking one path. */
     .wire--split {
         height: 30px;
         margin-left: 32px;
         border-left: 1px dashed var(--line-h);
         background: none;
     }
+    .wire--split i { display: none; }
     .wire--split::after { content: ""; }
     .flow { padding: 14px; }
 
@@ -1232,9 +1331,11 @@ pre.code[hidden] { display: none; }
 @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     .reveal.in { animation: none; }
-    .flow.live .node,
-    .flow.live .wire::after { animation: none; }
-    .flow.live .wire::after { opacity: .9; }
+    .flow .node,
+    .flow .wire::after,
+    .flow .wire--split i { animation: none; }
+    .flow .wire::after,
+    .flow .wire--split i { opacity: 0; }
     .dot--live { animation: none; }
     .card:hover { transform: none; }
     *, *::before, *::after {
