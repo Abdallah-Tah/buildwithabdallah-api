@@ -157,3 +157,43 @@ it('exposes the journey to assistive technology without the canvas', function ()
         ->assertSee('aria-describedby="adv-tip-signature"', false)
         ->assertSee('role="tooltip"', false);
 });
+
+it('places every pipe fitting on the real dimensions of its artwork', function (): void {
+    // geometry.js anchors each fitting by its ports, and those fractions are
+    // only meaningful against the sprite they were measured from. Regenerating
+    // the artwork at a different size would silently move every corner of the
+    // level, so the two are pinned together here.
+    $source = file_get_contents(public_path('js/api-adventure/geometry.js'));
+    $art = [
+        'drop' => 'elbow-left-down',
+        'turn' => 'elbow-left-up',
+        'return' => 'elbow-up-right',
+        'tee' => 'tee-up',
+    ];
+
+    foreach ($art as $fitting => $sprite) {
+        expect($source)->toMatch('/'.$fitting.':\s*{[^}]*}/');
+
+        preg_match('/'.$fitting.':\s*{\s*w:\s*(\d+),\s*h:\s*(\d+)/', $source, $declared);
+
+        [, $width, $height] = array_map('intval', $declared);
+        [$actual, $actualHeight] = getimagesize(public_path("images/api-adventure/pipes/{$sprite}.webp"));
+
+        expect([$width, $height])->toBe([$actual, $actualHeight]);
+    }
+});
+
+it('turns each corner with an elbow that has ports on those two sides', function (): void {
+    // A left-down elbow at a corner that needs left-up leaves the pipe meeting
+    // a closed flange, which is exactly how the lane used to read.
+    $html = $this->get(route('page.home'))->assertOk()->getContent();
+
+    expect($html)
+        // Row one turns down into the lane.
+        ->toContain('adv-mouth-rim')
+        ->toMatch('/adv-mouth-rim" src="[^"]*elbow-left-down/')
+        // The descent turns left along the lane.
+        ->toMatch('/adv-fit--turn" src="[^"]*elbow-left-up/')
+        // The lane turns down the left edge to the rail.
+        ->toMatch('/adv-fit--return" src="[^"]*elbow-up-right/');
+});

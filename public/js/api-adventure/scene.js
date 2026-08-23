@@ -19,6 +19,8 @@ import { Packets, Burst } from './particles.js';
 import { Runner, RUNNER_HEIGHT } from './runner.js';
 import { layoutPipework } from './pipework.js';
 
+const clamp = (v) => Math.max(0, Math.min(1, v));
+
 /** A sprite that rides the route, tinted by the stage the request is in. */
 class Orb {
     constructor(loader, size = 38) {
@@ -38,10 +40,11 @@ class Orb {
         this.mesh.scale.y = -1;
     }
 
-    update(point, tone, visible, pulse) {
-        this.mesh.visible = visible;
+    update(point, tone, alpha, pulse) {
+        this.mesh.visible = alpha > 0.02;
         this.mesh.position.set(point.x, point.y, 1.5);
         this.material.color.setHex(tone);
+        this.material.opacity = alpha;
         const s = 1 + Math.sin(pulse * 7) * 0.06;
         this.mesh.scale.set(s, -s, 1);
     }
@@ -131,6 +134,7 @@ export class AdventureScene {
 
         this.route = null;
         this.geo = null;
+        this.lift = 0;
         this.burstFired = false;
         this.clock = 0;
 
@@ -199,23 +203,30 @@ export class AdventureScene {
         const point = this.route.curve.getPointAt(head);
         const tone = TONES[beat.id] ?? TONES.products;
 
-        // Classic pipe travel: the runner is only out in the open while it is
-        // crossing a machine. In between, the request is the glowing packet
-        // inside the pipe, and the runner is not drawn at all.
-        // The final rail is floor, not pipe: the request has come back out as
-        // a signed event and runs it to the portal. Without this the runner
-        // handed off to the orb the moment it cleared the event bar, and the
-        // arrival — the part worth watching — had no character in it.
-        const onMachine = beat.id === 'webhook' || this.overMachine(point);
+        // The top pipe and the final rail are floor: the character runs them.
+        // Everything between is inside the plumbing, where the request is a
+        // packet. The two are joined by the mouth rather than by a visibility
+        // swap — the runner is seen going in, and seen coming back out.
+        const { zone, fade } = this.footing(point, beat);
+        const onFloor = zone !== 'pipe' && !timeline.complete;
 
-        this.runner.visible = onMachine && !timeline.complete;
-        this.runner.setState(this.runnerState(timeline, beat, local, onMachine));
-        this.runner.update(point, dt, this.geo.pipeHalf ?? 0);
+        this.runner.visible = onFloor;
+        this.runner.fade = fade;
+        this.runner.setState(this.runnerState(timeline, beat, local, zone, fade));
+        // The surface under the feet changes as the character steps up onto a
+        // module and back down onto bare pipe; easing it keeps that a step
+        // rather than a jolt.
+        const lift = this.liftAt(point);
+        this.lift += (lift - this.lift) * Math.min(1, dt * 14);
+        this.runner.update(point, dt, this.lift);
 
-        this.orb.update(point, tone, !onMachine || timeline.complete, this.clock);
+        const orbAlpha = timeline.complete ? 1 : 1 - fade;
+        this.orb.update(point, tone, onFloor ? orbAlpha : 1, this.clock);
         this.packets.setTone(tone);
         this.packets.follow(this.route.curve, head);
-        this.packets.visible = !onMachine;
+        // The wake stays lit on both surfaces; it is the pipe carrying charge,
+        // not a stand-in for the character.
+        this.packets.visible = !timeline.complete;
 
         if (timeline.complete && !this.burstFired) {
             this.burstFired = true;
@@ -231,6 +242,54 @@ export class AdventureScene {
         this.burst.update(dt);
         this.shock.update(dt);
         this.renderer.render(this.scene, this.camera);
+    }
+
+    /**
+     * Which surface the request is on, and how much of the character is still
+     * outside the plumbing.
+     *
+     * @returns {{zone: 'main'|'rail'|'pipe', fade: number}} fade is 1 in the
+     *          open and 0 fully inside a pipe.
+     */
+    footing(point, beat) {
+        const g = this.geo;
+
+        if (!g || g.stacked) {
+            return { zone: this.overMachine(point) ? 'main' : 'pipe', fade: 1 };
+        }
+
+        const LANE = 30;
+        const SWALLOW = 96;
+        // Row one: floor from off-screen left all the way into the mouth.
+        if (Math.abs(point.y - g.mainY) < LANE && point.x <= g.mouthX + 6) {
+            return { zone: 'main', fade: clamp((g.mouthX - point.x) / SWALLOW) };
+        }
+
+        // The final rail: back out of the left elbow and on to the portal.
+        if (Math.abs(point.y - g.railY) < LANE && point.x >= g.returnX - 6) {
+            return { zone: 'rail', fade: clamp((point.x - g.returnX) / SWALLOW) };
+        }
+
+        return { zone: 'pipe', fade: 0 };
+    }
+
+    /**
+     * How far above the route the surface underfoot is: the top of the module
+     * being crossed, or the top of the bare pipe between them.
+     */
+    liftAt(point) {
+        const ports = this.geo?.ports ?? {};
+
+        for (const port of Object.values(ports)) {
+            if (typeof port.w !== 'number') continue;
+
+            if (point.x > port.x && point.x < port.right
+                && point.y > port.y - 6 && point.y < port.bottom + 6) {
+                return point.y - port.y;
+            }
+        }
+
+        return this.geo?.pipeHalf ?? 0;
     }
 
     /** True when the request is over a machine rather than inside a pipe. */
@@ -249,9 +308,11 @@ export class AdventureScene {
         return false;
     }
 
-    runnerState(timeline, beat, local, onMachine) {
+    runnerState(timeline, beat, local, zone, fade) {
         if (timeline.complete) return 'success';
-        if (!onMachine) return 'enterPipe';
+        if (zone === 'pipe') return 'enterPipe';
+        // Going in, and coming back out. Both are poses the sheet has.
+        if (fade < 0.999) return zone === 'main' ? 'enterPipe' : 'exitPipe';
         // A jump just before the portal, so the arrival reads as one.
         if (beat.id === 'webhook' && local > 0.86) return 'jump';
         if (beat.id === 'signature' && local > 0.3 && local < 0.7) return 'idle';

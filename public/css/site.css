@@ -556,6 +556,10 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
     --adv-pipe-h: 40px;
     --adv-gap: 10px;
     --adv-fan-gap: 70px;
+    /* Room on the right for the corner elbow to be a corner rather than a
+       collision. It closes as the viewport narrows, so the columns never pay
+       for it: at 960px of stage the three capsules still sit at full size. */
+    --adv-exit-lane: clamp(0px, 100vw - 880px, 120px);
 
     --adv-ease: cubic-bezier(.32, .72, 0, 1);
 
@@ -635,8 +639,10 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
 /* ----------------------------------------------------------------- stage */
 .adv-stage {
     position: relative;
-    /* The top padding is the runner's headroom above the upper pipeline. */
-    padding: 74px 14px 6px;
+    /* The top padding is the runner's headroom above the upper pipeline: the
+       character stands on the capsules, so it needs its own height clear of
+       them or the HUD crops its head. */
+    padding: 92px 14px 6px;
 }
 .adv-canvas {
     position: absolute;
@@ -686,14 +692,33 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
 }
 .adv-fit { position: absolute; height: calc(var(--adv-pipe-h) * 2.35); width: auto; }
 
+/* The entrance: the corner elbow, which is already two and a half times the
+   pipe it turns. The bore is a hole rather than a shape — the artwork does the
+   describing, this only deepens the opening the runner disappears into. */
+.adv-mouth {
+    position: absolute;
+    display: block;
+    height: calc(var(--adv-pipe-h) * 2.35);
+    aspect-ratio: 288 / 238;
+}
+.adv-mouth-rim { position: absolute; inset: 0; width: 100%; height: 100%; }
+.adv-mouth-bore {
+    position: absolute;
+    left: 3.5%; top: 15%; width: 11%; height: 26%;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at 70% 50%, #04060c 0 52%, #0a1120 78%, rgba(10, 17, 32, 0) 100%);
+    box-shadow: 0 0 16px 3px rgba(61, 127, 255, .35);
+}
+
 /* ------------------------------------------------------------------ track */
 .adv-track {
     position: relative;
     z-index: 2;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr)) var(--adv-exit-lane);
     gap: 0 var(--adv-gap);
-    margin: 0; padding: 0;
+    margin: 0;
+    padding: 0;
     list-style: none;
 }
 .adv-node {

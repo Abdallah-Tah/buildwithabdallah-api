@@ -56,6 +56,12 @@ export class Runner {
         this.state = 'run';
         this.clock = 0;
         this.visible = true;
+        /**
+         * 1 out in the open, 0 fully inside the pipe. The scene drives this
+         * across the mouth so the character is swallowed rather than switched
+         * off; it also shrinks, which is what reads as depth.
+         */
+        this.fade = 1;
     }
 
     setState(state) {
@@ -80,9 +86,16 @@ export class Runner {
         const index = Math.floor(this.clock * FRAME_RATE) % frames;
         texture.offset.x = index / frames;
 
+        const fade = Math.max(0, Math.min(1, this.fade));
+        // Sink toward the centreline as it enters, so it goes into the bore
+        // rather than over it.
+        const scale = 0.72 + fade * 0.28;
+        this.material.opacity = fade;
+        this.mesh.scale.set(scale, -scale, 1);
+
         // Feet on top of the pipe, not inside it.
-        this.mesh.position.set(point.x, point.y - lift - RUNNER_HEIGHT * 0.4, 2);
-        this.mesh.visible = this.visible;
+        this.mesh.position.set(point.x, point.y - (lift + RUNNER_HEIGHT * 0.4) * fade, 2);
+        this.mesh.visible = this.visible && fade > 0.02;
     }
 
     dispose() {

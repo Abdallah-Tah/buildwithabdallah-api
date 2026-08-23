@@ -7,10 +7,12 @@
    the only way the artwork and the request path stay on the same line.
 
    Nothing is stretched. A run's width changes, but the body tiles into it at
-   its natural height, and every fitting keeps its own aspect ratio.
+   its natural height, and every fitting keeps its own aspect ratio. Fittings
+   are placed by their ports, so a run always meets a hole rather than a
+   flange, and each run stops at the fitting's edge rather than under it.
    ======================================================================== */
 
-import { SERVICES } from './geometry.js';
+import { SERVICES, fitting } from './geometry.js';
 
 /** @param {HTMLElement} root @param {object} geo */
 export function layoutPipework(root, geo) {
@@ -24,6 +26,7 @@ export function layoutPipework(root, geo) {
 
     if (geo.stacked) return;
 
+    /** A horizontal run between two x positions, centred on y. */
     const run = (selector, x, y, w) => {
         const el = pipes.querySelector(selector);
 
@@ -47,38 +50,45 @@ export function layoutPipework(root, geo) {
         el.dataset.advVertical = 'true';
     };
 
-    // Fittings are placed by their centre so a run can meet them at the seam.
-    const fit = (selector, cx, cy, rotate = 0) => {
+    /**
+     * A fitting whose ports land on (x, y).
+     * @returns {object} its measured box, so the runs can stop at its edges.
+     */
+    const fit = (selector, name, x, y) => {
+        const box = fitting(name, x, y);
         const el = pipes.querySelector(selector);
 
-        if (!el) return;
+        if (el) {
+            el.style.left = `${Math.round(box.cx)}px`;
+            el.style.top = `${Math.round(box.cy)}px`;
+            el.style.transform = `translate(-50%, -50%) rotate(${box.rotate}deg)`;
+        }
 
-        el.style.left = `${Math.round(cx)}px`;
-        el.style.top = `${Math.round(cy)}px`;
-        el.style.transform = `translate(-50%, -50%) rotate(${rotate}deg)`;
+        return box;
     };
 
     const { ports, mainY, fanY, serviceY, railY, turnX, returnX, portalX } = geo;
-    const fitHalf = 34;
 
-    // Row one: one run from off-screen left to the turn column, passing behind
-    // all three machines.
-    run('.adv-run--main', geo.entryX, mainY, turnX - geo.entryX - fitHalf);
-    fit('.adv-fit--drop', turnX, mainY, 0);
-    vertical('.adv-run--descent', turnX, mainY + fitHalf, fanY - mainY - fitHalf * 2);
-    fit('.adv-fit--turn', turnX, fanY, 0);
+    // Row one: one run from off-screen left into the mouth of the corner
+    // elbow, passing behind all three machines. The run stops at the elbow's
+    // flange, so the opening reads as an opening rather than as more pipe.
+    const drop = fit('.adv-mouth', 'drop', turnX, mainY);
+    run('.adv-run--main', geo.entryX, mainY, drop.left - geo.entryX);
 
-    // The fan lane, right to left, with a tee dropping into each machine.
-    run('.adv-run--fan', returnX + fitHalf, fanY, turnX - returnX - fitHalf * 2);
+    // Down the turn column into the branch lane.
+    const turn = fit('.adv-fit--turn', 'turn', turnX, fanY);
+    vertical('.adv-run--descent', turnX, drop.bottom, turn.top - drop.bottom);
 
-    SERVICES.forEach((id, i) => {
-        const x = ports[id].cx;
-        fit(`[data-adv-tee="${id}"]`, x, fanY, 180);
-        vertical(`[data-adv-branch="${id}"]`, x, fanY + fitHalf * 0.6, serviceY - fanY - fitHalf * 0.6);
+    // The lane, right to left, with a tee dropping into each machine.
+    const back = fit('.adv-fit--return', 'return', returnX, fanY);
+    run('.adv-run--fan', back.right, fanY, turn.left - back.right);
+
+    SERVICES.forEach((id) => {
+        const tee = fit(`[data-adv-tee="${id}"]`, 'tee', ports[id].cx, fanY);
+        vertical(`[data-adv-branch="${id}"]`, ports[id].cx, tee.bottom, serviceY - tee.bottom);
     });
 
     // Down the left edge and along the final rail into the portal.
-    fit('.adv-fit--return', returnX, fanY, 0);
-    vertical('.adv-run--tail', returnX, fanY + fitHalf, railY - fanY - fitHalf * 1.6);
+    vertical('.adv-run--tail', returnX, back.bottom, railY - back.bottom);
     run('.adv-run--final', returnX, railY, portalX - returnX);
 }

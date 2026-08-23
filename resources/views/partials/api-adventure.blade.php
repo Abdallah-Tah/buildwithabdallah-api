@@ -54,15 +54,20 @@
              is a repeating body between two fittings. --}}
         <div class="adv-pipes" aria-hidden="true">
             <span class="adv-run adv-run--main"></span>
-            <img class="adv-fit adv-fit--drop" src="{{ $asset('pipes/elbow-left-down.webp') }}" alt="">
+            {{-- The entrance. The runner is not swapped out mid-air: it runs
+                 into this bore and the request continues as a packet. --}}
+            <span class="adv-mouth">
+                <img class="adv-mouth-rim" src="{{ $asset('pipes/elbow-left-down.webp') }}" alt="">
+                <span class="adv-mouth-bore"></span>
+            </span>
             <span class="adv-run adv-run--descent"></span>
-            <img class="adv-fit adv-fit--turn" src="{{ $asset('pipes/elbow-up-right.webp') }}" alt="">
+            <img class="adv-fit adv-fit--turn" src="{{ $asset('pipes/elbow-left-up.webp') }}" alt="">
             <span class="adv-run adv-run--fan"></span>
             @foreach ($services as $service)
                 <img class="adv-fit adv-fit--tee" data-adv-tee="{{ $service['id'] }}" src="{{ $asset('pipes/tee-up.webp') }}" alt="">
                 <span class="adv-run adv-run--branch" data-adv-branch="{{ $service['id'] }}"></span>
             @endforeach
-            <img class="adv-fit adv-fit--return" src="{{ $asset('pipes/elbow-left-up.webp') }}" alt="">
+            <img class="adv-fit adv-fit--return" src="{{ $asset('pipes/elbow-up-right.webp') }}" alt="">
             <span class="adv-run adv-run--tail"></span>
             <span class="adv-run adv-run--final"></span>
         </div>
