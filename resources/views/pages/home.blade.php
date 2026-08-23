@@ -7,7 +7,7 @@
 
     {{-- ============================================================ Hero --}}
     <section class="hero wash grid-bg">
-        <div class="shell hero-solo">
+        <div class="shell hero-grid">
             <div class="reveal">
                 <span class="eyebrow">Central API &middot; v1</span>
 
@@ -38,25 +38,99 @@
                 </div>
             </div>
 
-        </div>
-    </section>
+            {{-- The pipeline below traces the real request path. Once it scrolls
+                 in, the trace loops: each node lights in order and a pulse walks
+                 every connector. Icons are decorative — the whole diagram is a
+                 single role="img" with the aria-label below as its text. --}}
+            <div class="flow" role="img"
+                 aria-label="Request pipeline: connected products send a signed request, the signature gate verifies it, the central API validates and queues the work, the AI, Meta WhatsApp and Stripe providers are called, and a signed application event is delivered back to the product.">
+                <div class="flow-head">
+                    <div class="flow-lights"><i></i><i></i><i></i></div>
+                    <span>api.buildwithabdallah.com</span>
+                </div>
 
-    {{-- ========================================== API distribution adventure --}}
-    {{-- The request journey, played as a level. The stages, statuses and the
-         architecture note are plain HTML; the canvas on top is decorative and
-         the section reads correctly with it removed or never started. --}}
-    <section class="section--tight" id="distribution" aria-labelledby="distribution-title">
-        <div class="shell">
-            <div class="section-head reveal">
-                <h2 id="distribution-title">Watch a request cross the boundary.</h2>
-                <p class="lede">
-                    One signed call leaves a product, clears the signature gate, is validated and
-                    queued by the central API, fans out to the providers it needs, and comes back
-                    as a signed event. Nothing below is a mock-up of the path — it is the path.
+                <div class="node" data-step="1">
+                    <span class="node-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.5-8 4.5-8-4.5L12 3z"/><path d="M4 12l8 4.5 8-4.5"/><path d="M4 16.5L12 21l8-4.5"/></svg>
+                    </span>
+                    <span class="node-body">
+                        <strong>Connected products</strong>
+                        <span>Kirada &middot; Djib Payroll &middot; SMKit</span>
+                    </span>
+                </div>
+
+                <div class="wire" data-step="1"></div>
+
+                <div class="node" data-step="2">
+                    <span class="node-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5.5c0 4-3 7.2-7 8.5-4-1.3-7-4.5-7-8.5V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>
+                    </span>
+                    <span class="node-body">
+                        <strong>Signature gate</strong>
+                        <span>X-BWA-Signature &middot; 300s window &middot; single-use nonce</span>
+                    </span>
+                </div>
+
+                <div class="wire" data-step="2"></div>
+
+                <div class="node" data-step="3">
+                    <span class="node-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>
+                    </span>
+                    <span class="node-body">
+                        <strong>Central API</strong>
+                        <span>Validate &rarr; persist &rarr; enqueue</span>
+                    </span>
+                </div>
+
+                <div class="wire wire--split" data-step="3"><i></i><i></i><i></i></div>
+
+                <div class="node-pair">
+                    <div class="node" data-step="4">
+                        <span class="node-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/><path d="M18.6 15.4l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6.6-1.6z"/></svg>
+                        </span>
+                        <span class="node-body">
+                            <strong>AI Assist</strong>
+                            <span>Model provider</span>
+                        </span>
+                    </div>
+                    <div class="node" data-step="5">
+                        <span class="node-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 01-11 6.6L4 19.5l1.4-4.2A7.5 7.5 0 1120 11.5z"/></svg>
+                        </span>
+                        <span class="node-body">
+                            <strong>WhatsApp</strong>
+                            <span>Meta Cloud API</span>
+                        </span>
+                    </div>
+                    <div class="node" data-step="6">
+                        <span class="node-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/><path d="M7 15h3"/></svg>
+                        </span>
+                        <span class="node-body">
+                            <strong>Billing</strong>
+                            <span>Stripe</span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="wire" data-step="4"></div>
+
+                <div class="node" data-step="7">
+                    <span class="node-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3l-8 10h6l-1 8 8-10h-6l1-8z"/></svg>
+                    </span>
+                    <span class="node-body">
+                        <strong>Signed application event</strong>
+                        <span>Delivered back to the product webhook</span>
+                    </span>
+                </div>
+
+                <p class="flow-note">
+                    Every external call is queued, bounded and idempotent.
                 </p>
             </div>
-
-            @include('partials.api-adventure')
         </div>
     </section>
 
