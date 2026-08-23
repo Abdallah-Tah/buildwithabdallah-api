@@ -24,6 +24,8 @@
                     <li><a href="{{ route('page.about') }}">Architecture</a></li>
                     <li><a href="{{ route('page.docs') }}">API documentation</a></li>
                     <li><a href="{{ route('health.ready') }}">Readiness probe</a></li>
+                    <li><a href="{{ route('page.legal') }}#privacy">Privacy</a></li>
+                    <li><a href="{{ route('page.legal') }}#terms">Terms</a></li>
                 </ul>
             </div>
 

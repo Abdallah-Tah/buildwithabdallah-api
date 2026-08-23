@@ -1,6 +1,6 @@
 @extends('layouts.site', [
     'title' => 'Architecture',
-    'description' => 'Why the Build With Abdallah Central API exists, how the request lifecycle works, the security model behind it, and the engineering decisions and trade-offs made along the way.',
+    'description' => 'Why the Build With Abdallah Central API exists, how the request lifecycle works, the security model behind it, and the engineering decisions and tradeoffs made along the way.',
 ])
 
 @section('content')
@@ -13,12 +13,12 @@
                 <h1>Why this service exists, and how it is built.</h1>
                 <p class="lede" style="max-width:680px">
                     This page is about the system: the problem it solves, the decisions behind it, and the
-                    trade-offs each one carried. For who I am and the rest of my work, see
+                    tradeoffs each one carried. For who I am and the rest of my work, see
                     <a class="ul-link" href="https://buildwithabdallah.com" rel="noopener">buildwithabdallah.com</a>.
                 </p>
                 <div class="hero-meta">
                     <span class="pill pill--brand">Distributed integration</span>
-                    <span class="pill pill--brand">Event-driven</span>
+                    <span class="pill pill--brand">Driven by events</span>
                     <span class="pill">Queue isolation</span>
                     <span class="pill">Cryptographic request auth</span>
                     <span class="pill">Encryption at rest</span>
@@ -90,7 +90,7 @@
                             <span class="ic">AuthenticateConnectedApplication</span> resolves the application
                             by slug, rejects it if disabled, checks the timestamp is within 300 seconds,
                             rejects a reused request ID, verifies the HMAC against the raw body, and applies
-                            a per-application rate limit. The nonce is written inside a guarded insert, so
+                            a rate limit per application. The nonce is written inside a guarded insert, so
                             two concurrent identical requests cannot both pass.
                         </p>
                     </div>
@@ -103,7 +103,7 @@
                         <p>
                             <span class="ic">CreateOutboundWhatsAppMessage</span> checks the product belongs to
                             the calling application, resolves the idempotency key, and enforces the 24-hour
-                            customer-service window &mdash; free-form text outside it is refused, templates are
+                            service window &mdash; open text outside it is refused, templates are
                             allowed. Only then is a message row created.
                         </p>
                     </div>
@@ -116,7 +116,7 @@
                         <p>
                             <span class="ic">SendWhatsAppMessage</span> runs on its own queue. It returns
                             immediately if the message already has a provider ID, so a retry can never
-                            double-send. If live sending is switched off, it records a
+                            cause a duplicate send. If live sending is switched off, it records a
                             <span class="ic">LIVE_SEND_DISABLED</span> failure rather than reaching the network.
                         </p>
                     </div>
@@ -212,10 +212,10 @@
                     </article>
                     <article class="card">
                         <span class="card-tag">Human access</span>
-                        <h3>Read-only operations console</h3>
+                        <h3>Operations console limited to reads</h3>
                         <p>
-                            The admin panel requires app-based MFA and every policy denies create, update and
-                            delete. Anything that mutates state is an explicit console command, which leaves a
+                            The admin panel requires authenticator app MFA and every policy denies create,
+                            update and delete. Anything that mutates state is an explicit console command, which leaves a
                             shell history instead of an anonymous click.
                         </p>
                     </article>

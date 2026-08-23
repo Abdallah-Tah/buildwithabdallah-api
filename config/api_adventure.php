@@ -43,7 +43,7 @@ return [
             'art' => 'signature-capsule.webp',
             'states' => ['Waiting', 'Verifying…', 'Verified'],
             'title' => 'Signature Gate',
-            'detail' => 'X-BWA-Signature · 300s window · single-use nonce',
+            'detail' => 'X-BWA-Signature · 300s window · nonce burns on first use',
             'tone' => 'secure',
             'icon' => 'shield',
             'weight' => 1.2,
@@ -67,6 +67,7 @@ return [
         [
             'id' => 'ai',
             'art' => 'ai.webp',
+            'loot' => 'effects/crystal.webp',
             'states' => ['Waiting', 'Calling', 'Delivered'],
             'title' => 'AI Assist',
             'detail' => 'Model provider',
@@ -76,6 +77,7 @@ return [
         [
             'id' => 'whatsapp',
             'art' => 'whatsapp.webp',
+            'loot' => 'effects/gem-green.webp',
             'states' => ['Waiting', 'Queued', 'Delivered'],
             'title' => 'WhatsApp',
             'detail' => 'Meta Cloud API',
@@ -85,6 +87,7 @@ return [
         [
             'id' => 'billing',
             'art' => 'billing.webp',
+            'loot' => 'effects/orb.webp',
             'states' => ['Waiting', 'Charging', 'Delivered'],
             'title' => 'Billing',
             'detail' => 'Stripe',

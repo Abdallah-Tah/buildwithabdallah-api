@@ -48,6 +48,11 @@
             <img class="adv-prop adv-prop--beacon-a" src="{{ $asset('environment/beacon.webp') }}" alt="" loading="lazy" decoding="async">
             <img class="adv-prop adv-prop--beacon-b" src="{{ $asset('environment/beacon.webp') }}" alt="" loading="lazy" decoding="async">
             <img class="adv-prop adv-prop--steam" src="{{ $asset('environment/smoke.webp') }}" alt="" loading="lazy" decoding="async">
+            <img class="adv-prop adv-prop--pipe-l" src="{{ $asset('pipes/vertical.webp') }}" alt="" loading="lazy" decoding="async">
+            <img class="adv-prop adv-prop--pipe-r" src="{{ $asset('pipes/vertical.webp') }}" alt="" loading="lazy" decoding="async">
+            <img class="adv-prop adv-prop--rack-d" src="{{ $asset('environment/server-rack.webp') }}" alt="" loading="lazy" decoding="async">
+            <img class="adv-prop adv-prop--beacon-c" src="{{ $asset('environment/beacon.webp') }}" alt="" loading="lazy" decoding="async">
+            <img class="adv-prop adv-prop--beacon-d" src="{{ $asset('environment/beacon.webp') }}" alt="" loading="lazy" decoding="async">
         </div>
 
         {{-- Pipework. Real artwork, tiled rather than stretched: every long run
@@ -88,7 +93,12 @@
                     <span class="adv-machine adv-machine--inline" data-adv-port="{{ $stage['id'] }}">
                         <img src="{{ $asset('stations/'.$stage['art']) }}" alt="" loading="lazy" decoding="async">
                     </span>
-                    <span class="adv-chip">{{ $stage['title'] }}</span>
+                    <span class="adv-chip">
+                        @if ($loop->first)
+                            <img class="adv-flag" src="{{ $asset('environment/flag.webp') }}" alt="" aria-hidden="true">
+                        @endif
+                        {{ $stage['title'] }}
+                    </span>
                     <button type="button" class="adv-meta" aria-describedby="adv-tip-{{ $stage['id'] }}">
                         <span class="adv-meta-detail">{{ $stage['detail'] }}</span>
                         <span class="adv-meta-status" data-adv-status data-adv-states="{{ implode('|', $stage['states']) }}">
@@ -111,6 +121,7 @@
                             <img class="adv-robot" data-adv-robot src="{{ $asset('robot/idle.webp') }}"
                                  data-adv-robot-wave="{{ $asset('robot/wave.webp') }}" alt="" loading="lazy" decoding="async">
                         @endif
+                        <img class="adv-loot adv-loot--{{ $service['id'] }}" src="{{ $asset($service['loot']) }}" alt="" loading="lazy" decoding="async">
                     </span>
                     <button type="button" class="adv-meta" aria-describedby="adv-tip-{{ $service['id'] }}">
                         <span class="adv-meta-detail">{{ $service['detail'] }}</span>
@@ -153,7 +164,10 @@
             <span class="adv-hud-life">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 20s-7-4.4-7-9.3A4 4 0 0112 8a4 4 0 017 2.7C19 15.6 12 20 12 20z"/></svg>&times;&nbsp;3
             </span>
-            <span class="adv-hud-clock" data-adv-timer>00:00</span>
+            <span class="adv-hud-clock">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="14" r="8"/><path d="M12 14v-5M9 2h6M12 2v4"/></svg>
+                <b data-adv-timer>00:00</b>
+            </span>
         </div>
     </div>
 

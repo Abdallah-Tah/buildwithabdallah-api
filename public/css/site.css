@@ -69,26 +69,31 @@
     --brand-soft-line: rgba(0, 92, 255, .22);
     --brand-read: var(--brand-600);
 
+    /* One typeface; the mono is for code, data and numeric UI only. */
     --font-sans: 'Manrope', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    --font-display: 'Space Grotesk', 'Manrope', ui-sans-serif, system-ui, -apple-system, sans-serif;
-    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+    --font-display: 'Manrope', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
 
-    --radius-xs: 3px;
-    --radius-sm: 5px;
-    --radius-md: 10px;
+    --radius-xs: 2px;
+    --radius-sm: 4px;
+    --radius-md: 8px;
     --radius-lg: 16px;
+
+    /* The one curve: real world mass, no default easings. */
+    --ease: cubic-bezier(.32, .72, 0, 1);
 
     --shell: 1240px;
     --gutter: 24px;
 }
 
 html.dark {
-    --bg: #09090b;
-    --surface: #0e0e10;
-    --panel: #161618;
-    --elev: #1c1c20;
-    --line: #26262b;
-    --line-h: #3a3a42;
+    /* Backgrounds stay on the approved dark palette. */
+    --bg: #000000;
+    --surface: #181818;
+    --panel: #1F1F1F;
+    --elev: #272727;
+    --line: #272727;
+    --line-h: #313131;
 
     --ink: #fafafa;
     --ink2: #d4d4d8;
@@ -102,8 +107,8 @@ html.dark {
     --warn: #fbbf24;
     --crit: #f87171;
 
-    --code-bg: #0b0b0d;
-    --code-line: #26262b;
+    --code-bg: #000000;
+    --code-line: #272727;
     --code-ink: #d4d4d8;
     --tok-kw: #69a0ff;
     --tok-fn: #fafafa;
@@ -171,9 +176,9 @@ code, kbd, pre, samp { font-family: var(--font-mono); }
 }
 
 html.dark ::-webkit-scrollbar { width: 10px; height: 10px; }
-html.dark ::-webkit-scrollbar-track { background: #09090b; }
-html.dark ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 5px; }
-html.dark ::-webkit-scrollbar-thumb:hover { background: #3a3a42; }
+html.dark ::-webkit-scrollbar-track { background: #000000; }
+html.dark ::-webkit-scrollbar-thumb { background: #272727; border-radius: 4px; }
+html.dark ::-webkit-scrollbar-thumb:hover { background: #313131; }
 
 .skip-link {
     position: absolute;
@@ -216,8 +221,8 @@ html.dark ::-webkit-scrollbar-thumb:hover { background: #3a3a42; }
     display: inline-flex;
     align-items: center;
     gap: .625rem;
-    margin-bottom: 20px;
-    font: 500 11px/1 var(--font-mono);
+    margin-bottom: 16px;
+    font: 500 12px/1 var(--font-mono);
     text-transform: uppercase;
     letter-spacing: .12em;
     color: var(--brand-read);
@@ -230,12 +235,12 @@ html.dark ::-webkit-scrollbar-thumb:hover { background: #3a3a42; }
     opacity: .6;
 }
 
-.section-head { max-width: 760px; margin-bottom: 56px; }
-.section-head h2 { font-size: clamp(30px, 3.6vw, 46px); }
+.section-head { max-width: 760px; margin-bottom: 48px; }
+.section-head h2 { font-size: clamp(30px, 3.2vw, 36px); }
 .section-head p {
-    margin-top: 18px;
+    margin-top: 16px;
     color: var(--dim);
-    font-size: 17px;
+    font-size: 16px;
     max-width: 660px;
 }
 
@@ -289,18 +294,18 @@ html.dark ::-webkit-scrollbar-thumb:hover { background: #3a3a42; }
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    min-height: 48px;
-    padding: 0 20px;
+    gap: 8px;
+    padding: 8px 12px;
     border: 1px solid var(--line);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     background: var(--surface);
     color: var(--ink2);
-    font: 600 15px/1 var(--font-sans);
+    font: 600 16px/1.5 var(--font-sans);
     cursor: pointer;
-    transition: color .15s, background-color .15s, border-color .15s, transform .15s;
+    transition: color .3s var(--ease), background-color .3s var(--ease), border-color .3s var(--ease), transform .3s var(--ease);
 }
 .btn:hover { color: var(--ink); border-color: var(--line-h); background: var(--elev); }
+.btn:active { transform: scale(.98); }
 .btn svg { flex: none; }
 
 .btn--primary {
@@ -312,7 +317,7 @@ html.dark ::-webkit-scrollbar-thumb:hover { background: #3a3a42; }
 .btn--primary:hover { background: var(--brand-400); color: var(--brand-ink); border-color: transparent; }
 
 .btn--ghost { background: transparent; }
-.btn--sm { min-height: 38px; padding: 0 14px; font-size: 13px; }
+.btn--sm { padding: 8px 12px; font-size: 14px; }
 
 .pill {
     display: inline-flex;
@@ -377,60 +382,68 @@ html.dark ::-webkit-scrollbar-thumb:hover { background: #3a3a42; }
 /* ========================================================================
    5. Header / navigation
    ======================================================================== */
+/* A floating glass pill detached from the top edge, not a full-width bar. */
 .site-header {
     position: sticky;
     top: 0;
     z-index: 40;
-    border-bottom: 1px solid var(--line);
-    background: var(--bg);
-    background: color-mix(in srgb, var(--bg) 92%, transparent);
-    backdrop-filter: saturate(180%) blur(12px);
-    -webkit-backdrop-filter: saturate(180%) blur(12px);
+    padding: 24px 16px 0;
+    pointer-events: none;
 }
 
 .nav {
+    pointer-events: auto;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    height: 76px;
+    width: max-content;
+    max-width: 100%;
+    margin-inline: auto;
+    padding: 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--bg) 72%, transparent);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    box-shadow: var(--shadow-card);
 }
 
-.brand { display: flex; align-items: center; gap: 14px; }
+.brand { display: flex; align-items: center; gap: 12px; }
 .brand img {
-    width: 42px;
-    height: 42px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     object-fit: cover;
     box-shadow: 0 0 0 1px var(--line);
-    transition: box-shadow .2s;
+    transition: box-shadow .3s var(--ease);
 }
 .brand:hover img { box-shadow: 0 0 0 1px var(--brand-soft-line); }
 .brand-name {
     display: block;
     font-family: var(--font-display);
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
     letter-spacing: -.02em;
     color: var(--ink);
 }
 .brand-sub {
     display: block;
-    margin-top: 4px;
-    font: 500 10px/1 var(--font-mono);
+    margin-top: 2px;
+    font: 500 12px/1 var(--font-mono);
     text-transform: uppercase;
-    letter-spacing: .16em;
+    letter-spacing: .12em;
     color: var(--mute);
 }
 
 .nav-links { display: none; align-items: center; gap: 2px; }
 .nav-link {
-    padding: 9px 14px;
-    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    border-radius: 999px;
     color: var(--dim);
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 500;
-    transition: color .15s, background-color .15s;
+    transition: color .3s var(--ease), background-color .3s var(--ease);
 }
 .nav-link:hover { color: var(--ink); background: var(--elev); }
 .nav-link[aria-current="page"] { color: var(--ink); background: var(--elev); }
@@ -441,16 +454,32 @@ html.dark ::-webkit-scrollbar-thumb:hover { background: #3a3a42; }
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 10px;
+    padding: 8px;
     border: 1px solid var(--line);
-    border-radius: var(--radius-sm);
+    border-radius: 999px;
     background: var(--surface);
     color: var(--ink2);
     cursor: pointer;
-    transition: color .15s, border-color .15s, background-color .15s;
+    transition: color .3s var(--ease), border-color .3s var(--ease), background-color .3s var(--ease);
 }
 .icon-btn:hover { color: var(--ink); border-color: var(--line-h); background: var(--elev); }
 .icon-btn svg { width: 20px; height: 20px; }
+
+/* Hamburger morph: the two bars rotate into an X, they never just vanish. */
+.burger { position: relative; display: block; width: 20px; height: 14px; }
+.burger i {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    border-radius: 2px;
+    background: currentColor;
+    transition: top .7s var(--ease), transform .7s var(--ease);
+}
+.burger i:first-child { top: 0; }
+.burger i:last-child { top: 12px; }
+.nav-toggle[aria-expanded="true"] .burger i:first-child { top: 6px; transform: rotate(45deg); }
+.nav-toggle[aria-expanded="true"] .burger i:last-child { top: 6px; transform: rotate(-45deg); }
 
 /* Theme toggle icon swap, driven off html[data-theme] */
 [data-theme-toggle] .ti { display: none; }
@@ -459,30 +488,54 @@ html[data-theme="light"] [data-theme-toggle] .ti-light { display: block; }
 html[data-theme="dark"]  [data-theme-toggle] .ti-dark  { display: block; }
 html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
 
-.nav-cta { display: none; }
+.nav-ext { display: none; }
 .nav-toggle { display: inline-flex; }
 
+/* The menu opens as a screen filling heavy glass overlay; the links rise out
+   of an invisible box one by one instead of appearing all at once. */
 .mobile-menu {
-    display: none;
-    border-top: 1px solid var(--line);
-    background: var(--surface);
+    position: fixed;
+    inset: 0;
+    z-index: 39;
+    display: flex;
+    opacity: 0;
+    visibility: hidden;
+    background: color-mix(in srgb, var(--bg) 80%, transparent);
+    backdrop-filter: blur(64px);
+    -webkit-backdrop-filter: blur(64px);
+    transition: opacity .7s var(--ease), visibility .7s;
 }
-.mobile-menu.open { display: block; }
-.mobile-menu .shell { padding-block: 14px; }
+.mobile-menu.open { opacity: 1; visibility: visible; }
+.mobile-menu .shell {
+    margin-block: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-block: 24px;
+}
 .mobile-menu a {
     display: block;
-    padding: 13px 12px;
-    border-radius: var(--radius-sm);
+    padding: 12px;
+    border-radius: var(--radius-md);
     color: var(--dim);
-    font-size: 16px;
-    font-weight: 500;
+    font-size: 24px;
+    font-weight: 600;
+    opacity: 0;
+    transform: translateY(48px);
+    transition: opacity .7s var(--ease), transform .7s var(--ease), color .3s var(--ease), background-color .3s var(--ease);
 }
+.mobile-menu.open a { opacity: 1; transform: translateY(0); }
+.mobile-menu.open a:nth-child(1) { transition-delay: .1s, .1s, 0s, 0s; }
+.mobile-menu.open a:nth-child(2) { transition-delay: .15s, .15s, 0s, 0s; }
+.mobile-menu.open a:nth-child(3) { transition-delay: .2s, .2s, 0s, 0s; }
+.mobile-menu.open a:nth-child(4) { transition-delay: .25s, .25s, 0s, 0s; }
+.mobile-menu.open a:nth-child(5) { transition-delay: .3s, .3s, 0s, 0s; }
 .mobile-menu a:hover { color: var(--ink); background: var(--elev); }
-.mobile-menu a[aria-current="page"] { color: var(--ink); background: var(--elev); }
+.mobile-menu a[aria-current="page"] { color: var(--ink); }
 
 @media (min-width: 1024px) {
     .nav-links { display: flex; }
-    .nav-cta { display: inline-flex; }
+    .nav-ext { display: inline-flex; }
     .nav-toggle { display: none; }
     .mobile-menu { display: none !important; }
 }
@@ -490,19 +543,27 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
 /* ========================================================================
    6. Hero
    ======================================================================== */
-.hero { padding: 84px 0 96px; }
+.hero { padding: 80px 0 96px; }
 .hero-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 56px;
     align-items: center;
 }
+/* The one place a gradient lives: on the headline text, never a background. */
 .hero h1 {
-    font-size: clamp(40px, 6.4vw, 68px);
+    max-width: 680px;
+    font-size: clamp(36px, 5vw, 60px);
+    line-height: 1;
     letter-spacing: -.045em;
+    background-image: linear-gradient(to right, #000000, #666666);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
 }
-.hero .lede { margin-top: 24px; max-width: 560px; }
-.hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 36px; }
+html.dark .hero h1 { background-image: linear-gradient(to right, #FFFFFF, #9B9B9B); }
+.hero .lede { margin-top: 24px; max-width: 680px; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
 .hero-meta {
     display: flex;
     flex-wrap: wrap;
@@ -615,7 +676,8 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
 .adv-host { margin-left: auto; font: 500 10px/1 var(--font-mono); color: var(--adv-faint); }
 
 /* ------------------------------------------------------------------- hud */
-/* An overlay, not a row of cards: it must not compete with the machines. */
+/* An overlay of three small cards, as in the reference composition. They
+   stay dim and compact so the machines still read first. */
 .adv-hud {
     position: absolute;
     inset: 10px 14px auto;
@@ -627,6 +689,14 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
     font: 500 11px/1 var(--font-mono);
     color: var(--adv-dim);
 }
+.adv-hud-score,
+.adv-hud-life,
+.adv-hud-clock {
+    padding: 6px 12px;
+    border: 1px solid var(--adv-line);
+    border-radius: var(--radius-md);
+    background: rgba(8, 12, 22, .78);
+}
 .adv-hud-score { display: inline-flex; align-items: baseline; gap: 7px; }
 .adv-hud-score i {
     font-style: normal; font-size: 9px; letter-spacing: .14em;
@@ -635,6 +705,9 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
 .adv-hud-score b { font: 600 15px/1 var(--font-mono); color: var(--adv-ok); }
 .adv-hud-life { display: inline-flex; align-items: center; gap: 5px; color: #fb7185; }
 .adv-hud-life svg { width: 12px; height: 12px; animation: advHeart 2.4s var(--adv-ease) infinite; }
+.adv-hud-clock { display: inline-flex; align-items: center; gap: 6px; }
+.adv-hud-clock svg { width: 12px; height: 12px; }
+.adv-hud-clock b { font-weight: 600; }
 
 /* ----------------------------------------------------------------- stage */
 .adv-stage {
@@ -655,18 +728,24 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
 
 /* --------------------------------------------------------------- scenery */
 /* Three depths. None of it is interactive, none of it carries meaning, and
-   all of it stays under 30% opacity so the pipeline reads first. */
+   all of it stays under 40% opacity so the pipeline reads first. */
 .adv-scenery { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
-.adv-prop { position: absolute; filter: saturate(.55); }
+.adv-prop { position: absolute; filter: saturate(.7); }
 
-.adv-prop--rack-a { left: 1.5%;  top: 46%; width: 52px; opacity: .3; }
-.adv-prop--rack-b { right: 2%;   top: 41%; width: 44px; opacity: .22; }
-.adv-prop--rack-c { left: 33%;   bottom: 20%; width: 34px; opacity: .14; }
-.adv-prop--deck-a { right: 6%;   bottom: 12%; width: 190px; opacity: .12; }
-.adv-prop--deck-b { left: 4%;    top: 34%; width: 130px; opacity: .1; }
-.adv-prop--beacon-a { left: 22%; bottom: 24%; width: 22px; opacity: .34; animation: advBlink 3.6s var(--adv-ease) infinite; }
-.adv-prop--beacon-b { right: 26%; top: 43%; width: 18px; opacity: .26; animation: advBlink 4.4s var(--adv-ease) infinite .8s; }
-.adv-prop--steam { left: 12%; bottom: 26%; width: 60px; opacity: .1; animation: advSteam 9s linear infinite; }
+.adv-prop--rack-a { left: 1.5%;  top: 46%; width: 52px; opacity: .34; }
+.adv-prop--rack-b { right: 2%;   top: 41%; width: 44px; opacity: .26; }
+.adv-prop--rack-c { left: 33%;   bottom: 20%; width: 34px; opacity: .18; }
+.adv-prop--rack-d { right: 14%;  bottom: 32%; width: 40px; opacity: .2; }
+.adv-prop--deck-a { right: 6%;   bottom: 12%; width: 190px; opacity: .16; }
+.adv-prop--deck-b { left: 4%;    top: 34%; width: 130px; opacity: .14; }
+.adv-prop--beacon-a { left: 22%; bottom: 24%; width: 22px; opacity: .38; animation: advBlink 3.6s var(--adv-ease) infinite; }
+.adv-prop--beacon-b { right: 26%; top: 43%; width: 18px; opacity: .3; animation: advBlink 4.4s var(--adv-ease) infinite .8s; }
+.adv-prop--beacon-c { right: 9%;  top: 20%; width: 16px; opacity: .32; animation: advBlink 5.2s var(--adv-ease) infinite .4s; }
+.adv-prop--beacon-d { left: 9%;   top: 16%; width: 14px; opacity: .28; animation: advBlink 4.8s var(--adv-ease) infinite 1.4s; }
+.adv-prop--steam { left: 12%; bottom: 26%; width: 60px; opacity: .12; animation: advSteam 9s linear infinite; }
+/* Side columns frame the stage the way the reference composition does. */
+.adv-prop--pipe-l { left: -14px; top: 6%;  width: 58px; opacity: .2; }
+.adv-prop--pipe-r { right: -12px; top: 26%; width: 66px; opacity: .24; }
 
 /* ------------------------------------------------------------- pipework */
 /* Long runs tile a repeatable body between fittings. Nothing here is
@@ -764,17 +843,17 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
 }
 /* Only the artwork dims. The label and status sit inside this element and
    have to stay legible while the machine is still waiting its turn. */
-.adv-machine > img:not(.adv-robot) {
+.adv-machine > img:not(.adv-robot):not(.adv-loot) {
     filter: grayscale(.55) brightness(.62);
     transition: filter .55s var(--adv-ease);
 }
-/* Direct child only: the robot is also an img inside the machine and must
-   keep its own size. */
-.adv-machine > img:not(.adv-robot) { display: block; width: 100%; height: auto; }
+/* Direct children only: the robot and the loot are also imgs inside the
+   machine and must keep their own size and colour. */
+.adv-machine > img:not(.adv-robot):not(.adv-loot) { display: block; width: 100%; height: auto; }
 
 .adv-node.is-active .adv-machine { transform: translateY(-2px); }
-.adv-node.is-active .adv-machine > img:not(.adv-robot) { filter: none; }
-.adv-node.is-done .adv-machine > img:not(.adv-robot) { filter: brightness(.92); }
+.adv-node.is-active .adv-machine > img:not(.adv-robot):not(.adv-loot) { filter: none; }
+.adv-node.is-done .adv-machine > img:not(.adv-robot):not(.adv-loot) { filter: brightness(.92); }
 
 /* The name, sitting on the machine's blank sign board. */
 /* Anchored to where the blank board actually is in the artwork, measured as a
@@ -806,6 +885,7 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
 
 /* Names float above the pipe: there is no sign board on a bare capsule. */
 .adv-chip {
+    position: relative;
     padding: 4px 11px;
     border: 1px solid color-mix(in srgb, var(--adv-tone) 45%, transparent);
     border-radius: 999px;
@@ -815,6 +895,17 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
     white-space: nowrap;
 }
 .adv-node.is-active .adv-chip { border-color: color-mix(in srgb, var(--adv-tone) 85%, transparent); }
+/* The journey's start marker: a small flag planted on the first chip. */
+.adv-flag {
+    position: absolute;
+    left: 82%;
+    bottom: calc(100% - 3px);
+    width: 26px;
+    height: auto;
+    pointer-events: none;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .65));
+    animation: advBob 3.4s var(--adv-ease) infinite;
+}
 
 /* One dot instead of a "Status:" prefix on every object. */
 .adv-status-dot {
@@ -852,6 +943,24 @@ html:not([data-theme]) [data-theme-toggle] .ti-auto { display: block; }
     height: auto;
     animation: advBob 3.4s var(--adv-ease) infinite;
 }
+
+/* Collectibles: they pop onto the platform the moment the provider
+   delivers, so a finished branch reads as one that paid out. */
+.adv-loot {
+    position: absolute;
+    bottom: 12%;
+    width: 20%;
+    height: auto;
+    opacity: 0;
+    transform: scale(.3) translateY(10px);
+    transition: opacity .4s var(--adv-ease), transform .6s var(--adv-ease);
+    pointer-events: none;
+}
+.adv-loot--ai { left: 26%; width: 26%; }
+.adv-loot--whatsapp { right: 10%; width: 15%; }
+/* The orb art is blue; the billing payout reads as a coin, so warm it up. */
+.adv-loot--billing { right: 6%; filter: hue-rotate(185deg) saturate(1.5) brightness(1.1); }
+.adv-node.is-done .adv-loot { opacity: 1; transform: scale(1) translateY(0); }
 
 /* ------------------------------------------------------------ compact meta */
 .adv-meta {
@@ -1529,15 +1638,14 @@ pre.code[hidden] { display: none; }
     :root { --gutter: 16px; }
 
     /* Brand lockup plus theme toggle and menu button have to fit 320px. */
-    .nav { height: 66px; }
-    .brand { gap: 10px; }
-    .brand img { width: 36px; height: 36px; }
+    .brand { gap: 8px; }
+    .brand img { width: 28px; height: 28px; }
     .brand-name { font-size: 14px; }
-    .brand-sub { font-size: 9px; letter-spacing: .12em; }
+    .brand-sub { display: none; }
     .icon-btn { padding: 8px; }
     .icon-btn svg { width: 18px; height: 18px; }
 
-    .hero h1 { font-size: clamp(31px, 8.6vw, 40px); }
+    .hero h1 { font-size: clamp(30px, 8.6vw, 40px); }
 
     .adv-stage { padding: 18px 12px 6px; }
     .adv-head, .adv-hud, .adv-foot { padding-inline: 12px; }
@@ -1570,19 +1678,26 @@ pre.code[hidden] { display: none; }
     .adv-node[data-adv-row="service"] { padding-top: 18px; }
 
     /* The horizontal pipework belongs to the wide composition. Vertically the
-       run is short enough that a connector reads better than a pipe. */
+       same plumbing continues as real pipe stubs between the modules, so the
+       stack still reads as one continuous run. */
     .adv-pipes { display: none; }
 
     .adv-node + .adv-node::before {
         content: "";
         position: absolute;
-        top: -20px;
+        top: -26px;
         left: 50%;
-        width: 3px;
-        height: 20px;
-        background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--adv-tone) 70%, transparent));
+        width: 30px;
+        height: 30px;
+        background-image: var(--adv-pipe-body-vertical);
+        background-repeat: repeat-y;
+        background-size: 100% auto;
         transform: translateX(-50%);
     }
+
+    /* The framing columns belong to the wide composition; on a phone they
+       float mid-panel and read as noise. */
+    .adv-prop--pipe-l, .adv-prop--pipe-r { display: none; }
 
     /* The final row is a column here, so the event bar and the portal stack
        instead of sitting either side of a rail that no longer exists. */
@@ -1620,7 +1735,7 @@ pre.code[hidden] { display: none; }
    18. Motion
    ======================================================================== */
 .reveal { opacity: 1; transform: none; }
-.reveal.in { animation: revealUp .8s cubic-bezier(.2, .7, .3, 1) both; }
+.reveal.in { animation: revealUp .8s var(--ease) both; }
 .reveal[data-delay="1"].in { animation-delay: .06s; }
 .reveal[data-delay="2"].in { animation-delay: .12s; }
 .reveal[data-delay="3"].in { animation-delay: .18s; }
@@ -1628,10 +1743,25 @@ pre.code[hidden] { display: none; }
 .reveal[data-delay="5"].in { animation-delay: .30s; }
 .reveal[data-delay="6"].in { animation-delay: .36s; }
 
+/* A heavy fade up with a settling blur: elements arrive with mass. */
 @keyframes revealUp {
-    from { opacity: 0; transform: translateY(14px); }
-    to   { opacity: 1; transform: none; }
+    from { opacity: 0; transform: translateY(64px); filter: blur(12px); }
+    to   { opacity: 1; transform: none; filter: blur(0); }
 }
+
+/* Tagline reveal: words sit muted and light up one at a time in reading
+   order as the section crosses the trigger line. */
+.tagline { max-width: 680px; }
+.tagline h2 {
+    font-size: clamp(36px, 4vw, 60px);
+    line-height: 1;
+    letter-spacing: -.045em;
+}
+.tagline-word {
+    color: color-mix(in srgb, var(--ink) 30%, transparent);
+    transition: color .5s var(--ease);
+}
+.tagline-word.on { color: var(--ink); }
 
 @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }

@@ -16,7 +16,7 @@
        -------------------------------------------------------------------- */
     const THEME_KEY = 'bwa.theme';
     const THEME_ORDER = ['auto', 'light', 'dark'];
-    const THEME_COLOR = { dark: '#09090b', light: '#dbe4f2' };
+    const THEME_COLOR = { dark: '#000000', light: '#dbe4f2' };
     const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
 
     const applyTheme = (choice) => {
@@ -175,6 +175,45 @@
             observer.observe(flow);
         }
     }
+
+    /* --------------------------------------------------------------------
+       3b. Tagline reveal — words sit muted and light up one at a time in
+       reading order once the section crosses into view
+       -------------------------------------------------------------------- */
+    document.querySelectorAll('[data-tagline]').forEach((el) => {
+        const words = el.textContent.trim().split(/\s+/);
+
+        el.textContent = '';
+
+        const spans = words.map((word, index) => {
+            const span = document.createElement('span');
+            span.className = 'tagline-word';
+            span.textContent = word;
+            span.style.transitionDelay = `${index * 70}ms`;
+            el.append(span, document.createTextNode(' '));
+
+            return span;
+        });
+
+        if (prefersReduced() || typeof IntersectionObserver === 'undefined') {
+            spans.forEach((span) => span.classList.add('on'));
+
+            return;
+        }
+
+        const taglineObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (!entry.isIntersecting) {
+                    return;
+                }
+
+                spans.forEach((span) => span.classList.add('on'));
+                taglineObserver.unobserve(entry.target);
+            });
+        }, { rootMargin: '0px 0px -20% 0px', threshold: 0.4 });
+
+        taglineObserver.observe(el);
+    });
 
     /* --------------------------------------------------------------------
        4. Code sample tabs

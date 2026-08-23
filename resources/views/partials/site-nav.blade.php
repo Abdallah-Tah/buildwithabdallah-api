@@ -26,18 +26,11 @@
         <div class="nav-actions">
             @include('partials.theme-toggle')
 
-            <a class="btn btn--primary btn--sm nav-cta" href="https://buildwithabdallah.com" rel="noopener">
-                buildwithabdallah.com
-                <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                    <path d="M1 7h11M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </a>
+            <a class="nav-link nav-ext" href="https://buildwithabdallah.com" rel="noopener">buildwithabdallah.com</a>
 
             <button type="button" class="icon-btn nav-toggle" data-nav-toggle
                     aria-label="Toggle navigation" aria-expanded="false" aria-controls="mobile-menu">
-                <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/>
-                </svg>
+                <span class="burger" aria-hidden="true"><i></i><i></i></span>
             </button>
         </div>
     </div>

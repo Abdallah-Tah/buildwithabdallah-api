@@ -78,13 +78,20 @@
                 </div>
                 <div class="stat">
                     <b><i data-count="24" data-count-suffix="h">0</i></b>
-                    <span>Customer-service window enforced before free-form text requires a template.</span>
+                    <span>Service window enforced before open text requires a template.</span>
                 </div>
                 <div class="stat">
                     <b><i data-count="0">0</i></b>
                     <span>Provider credentials stored in any product codebase. That is the entire point.</span>
                 </div>
             </div>
+        </div>
+    </section>
+
+    {{-- ================================================= Tagline reveal --}}
+    <section class="section--tight">
+        <div class="shell">
+            <h2 class="tagline" data-tagline>Every provider, every retry, every secret lives here. Products keep one contract and none of the risk.</h2>
         </div>
     </section>
 
@@ -106,7 +113,8 @@
                     <h3>Signed application access</h3>
                     <p>
                         Each product gets its own request and event secrets. Requests are timestamped,
-                        signed over the raw body, and replay-protected by a persisted single-use nonce.
+                        signed over the raw body, and protected against replay by a persisted nonce
+                        that burns on first use.
                     </p>
                     <ul>
                         <li>HMAC-SHA256 over a canonical string</li>
@@ -119,13 +127,13 @@
                     <span class="card-tag">02 / Messaging</span>
                     <h3>WhatsApp orchestration</h3>
                     <p>
-                        A provider-neutral contract routes traffic through the Meta Cloud API, with a
-                        second provider kept behind a hard-disabled flag so a stale column can never
+                        A provider agnostic contract routes traffic through the Meta Cloud API, with
+                        the alternate provider kept behind an off switch so a stale column can never
                         silently reroute production traffic.
                     </p>
                     <ul>
-                        <li>Templates and free-form text</li>
-                        <li>Customer-service window enforced</li>
+                        <li>Templates and open text</li>
+                        <li>Service window enforced</li>
                         <li>Inbound product routing</li>
                     </ul>
                 </article>
@@ -139,9 +147,9 @@
                         customer.
                     </p>
                     <ul>
-                        <li>Redirect host allow-listing</li>
+                        <li>Allow list for redirect hosts</li>
                         <li>Signed webhook verification</li>
-                        <li>Per-product billing callbacks</li>
+                        <li>Per product billing callbacks</li>
                     </ul>
                 </article>
 
@@ -168,7 +176,7 @@
                     </p>
                     <ul>
                         <li>Authenticated encryption casts</li>
-                        <li>Hash-based contact lookup</li>
+                        <li>Contact lookup by hash</li>
                         <li>Logs carry IDs, never content</li>
                     </ul>
                 </article>
@@ -178,11 +186,11 @@
                     <h3>Observable by design</h3>
                     <p>
                         Queues, exceptions, slow requests and failed deliveries surface in one secured
-                        console. It is deliberately read-only &mdash; every mutation is an audited console
-                        command instead.
+                        console. It is deliberately limited to reads &mdash; every mutation is an audited
+                        console command instead.
                     </p>
                     <ul>
-                        <li>MFA-required operations panel</li>
+                        <li>Operations panel behind MFA</li>
                         <li>Laravel Pulse metrics</li>
                         <li>Readiness probe for dependencies</li>
                     </ul>
@@ -279,7 +287,7 @@
                     <h3 style="margin-top:16px;font-size:20px">Live dependency readiness</h3>
                 </div>
                 <div>
-                    <p style="color:var(--dim);font-size:14.5px">
+                    <p style="color:var(--dim);font-size:14px">
                         Read live from <span class="ic">GET /health/ready</span>, which verifies the database,
                         cache, queue connection and the configured WhatsApp provider on every call.
                     </p>

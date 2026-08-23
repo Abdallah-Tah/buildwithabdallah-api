@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Route;
 Route::view('/', 'pages.home')->name('page.home');
 Route::view('/about', 'pages.about')->name('page.about');
 Route::view('/docs', 'pages.docs')->name('page.docs');
+Route::view('/legal', 'pages.legal')->name('page.legal');
 
 Route::get('/webhooks/meta/whatsapp', [MetaWhatsAppWebhookController::class, 'verify'])
     ->name('webhooks.meta.whatsapp.verify');
