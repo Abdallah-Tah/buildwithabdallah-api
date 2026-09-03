@@ -932,6 +932,11 @@ html.dark .hero h1 { background-image: linear-gradient(to right, #FFFFFF, #9B9B9
     white-space: nowrap;
     transform: translate(-50%, 0);
 }
+.adv-service-icon { width: 16px; height: 16px; flex: none; }
+.adv-sign--service { display: inline-flex; align-items: center; gap: 6px; }
+.adv-sign--ai { color: #c084fc; border-color: rgba(192, 132, 252, .5); }
+.adv-sign--whatsapp { color: #4ade80; border-color: rgba(74, 222, 128, .5); }
+.adv-sign--billing { color: #a5a1ff; border-color: rgba(165, 161, 255, .5); }
 .adv-node.is-active .adv-sign--service,
 .adv-node.is-done .adv-sign--service { border-color: color-mix(in srgb, var(--adv-tone) 65%, transparent); }
 

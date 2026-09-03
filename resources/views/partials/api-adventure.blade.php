@@ -116,7 +116,16 @@
                     data-adv-row="service">
                     <span class="adv-machine adv-machine--service" style="{{ $sign($service['art']) }}" data-adv-port="{{ $service['id'] }}">
                         <img src="{{ $asset('stations/'.$service['art']) }}" alt="" loading="lazy" decoding="async">
-                        <span class="adv-sign adv-sign--service">{{ $service['title'] }}</span>
+                        <span class="adv-sign adv-sign--service adv-sign--{{ $service['id'] }}">
+                            @if ($service['id'] === 'whatsapp')
+                                <svg class="adv-service-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2a9.84 9.84 0 0 0-8.49 14.79L2 22l5.35-1.5A9.96 9.96 0 0 0 12.04 22 9.92 9.92 0 0 0 22 12.08 9.92 9.92 0 0 0 12.04 2Zm0 18.32a8.22 8.22 0 0 1-4.19-1.15l-.3-.18-3.18.89.85-3.1-.2-.32a8.18 8.18 0 0 1-1.26-4.38 8.28 8.28 0 1 1 8.28 8.24Zm4.54-6.2c-.25-.13-1.47-.73-1.7-.81-.23-.09-.4-.13-.57.12-.16.25-.64.81-.79.98-.14.17-.29.19-.54.07-.25-.13-1.05-.39-2-1.23a7.5 7.5 0 0 1-1.38-1.72c-.15-.25-.02-.38.11-.5.11-.11.25-.29.37-.44.13-.14.17-.25.25-.41.08-.17.04-.32-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.87.85-.87 2.07 0 1.23.89 2.41 1.02 2.58.12.17 1.75 2.68 4.25 3.76.59.26 1.06.41 1.42.52.6.19 1.14.16 1.57.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.08.15-1.18-.06-.1-.23-.16-.48-.29Z"/></svg>
+                            @elseif ($service['id'] === 'ai')
+                                <svg class="adv-service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/><path d="M18.6 15.4l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6.6-1.6z"/></svg>
+                            @elseif ($service['id'] === 'billing')
+                                <svg class="adv-service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h3"/></svg>
+                            @endif
+                            <span>{{ $service['title'] }}</span>
+                        </span>
                         @if ($service['id'] === 'ai')
                             <img class="adv-robot" data-adv-robot src="{{ $asset('robot/idle.webp') }}"
                                  data-adv-robot-wave="{{ $asset('robot/wave.webp') }}" alt="" loading="lazy" decoding="async">
